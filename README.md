@@ -4,7 +4,7 @@ Calculadora de cotizaciones de Popurrí Estudio (diseño, producción y montaje)
 
 ## Publicar con GitHub Pages
 1. Settings → Pages → Source: *Deploy from a branch* → rama `main`, carpeta `/ (root)`.
-2. En *Custom domain* debe quedar `popurriestudio.cl` (lo define el archivo `CNAME`). Activar *Enforce HTTPS* cuando aparezca.
+2. Cuando el DNS de popurriestudio.cl apunte a GitHub, escribir `popurriestudio.cl` en *Custom domain* y activar *Enforce HTTPS*.
 
 ## Apuntar el dominio popurriestudio.cl (en NIC Chile o donde esté el DNS)
 - Registros `A` para `popurriestudio.cl`: 185.199.108.153 · 185.199.109.153 · 185.199.110.153 · 185.199.111.153
