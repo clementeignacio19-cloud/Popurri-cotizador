@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotizador Popurrí</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: barra de marca + navegación (Cotizar · Cotizaciones · Mi mes · Valores base).
+   En Cotizar: a la izquierda los pasos; a la derecha el documento de cotización que se arma solo; abajo una barra fija con el semáforo. */
+:root{
+  --fucsia:#d4167e; --verde:#1c9a55; --calipso:#0aa9bb;
+  --ink:#1b1d22; --muted:#5d6570; --line:#dde2e6;
+  --bg:#f4f7f7; --card:#ffffff; --soft:#eef3f4;
+  --fucsia-soft:#fde7f2; --verde-soft:#e3f5ea; --calipso-soft:#dff5f8;
+  --rojo:#c62828; --rojo-soft:#fdeaea; --amarillo:#b45309; --amarillo-soft:#fef3e2;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --font-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --r:14px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --fucsia:#ff4fa8; --verde:#3fcf7f; --calipso:#33d1e2;
+  --ink:#eef2f4; --muted:#a2acb5; --line:#30363c; --bg:#111416; --card:#1a1e21; --soft:#22282c;
+  --fucsia-soft:#3a1528; --verde-soft:#13301f; --calipso-soft:#0f2e33;
+  --rojo:#ff6b6b; --rojo-soft:#3a1616; --amarillo:#f6ad55; --amarillo-soft:#3a2a12; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --fucsia:#ff4fa8; --verde:#3fcf7f; --calipso:#33d1e2;
+  --ink:#eef2f4; --muted:#a2acb5; --line:#30363c; --bg:#111416; --card:#1a1e21; --soft:#22282c;
+  --fucsia-soft:#3a1528; --verde-soft:#13301f; --calipso-soft:#0f2e33;
+  --rojo:#ff6b6b; --rojo-soft:#3a1616; --amarillo:#f6ad55; --amarillo-soft:#3a2a12; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;padding-bottom:84px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--calipso);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+[hidden]{display:none!important}
+
+.brandbar{height:6px;background:linear-gradient(90deg,var(--fucsia) 0 33.3%,var(--verde) 33.3% 66.6%,var(--calipso) 66.6%)}
+header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;padding:14px clamp(16px,3vw,36px);background:var(--card);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:12px;min-height:44px}
+.logo img{max-height:50px;max-width:190px;object-fit:contain}
+.wordmark{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1;letter-spacing:-.03em}
+.wordmark .p1{color:var(--fucsia)}.wordmark .p2{color:var(--verde)}.wordmark .p3{color:var(--calipso)}
+.wordmark small{display:block;font-family:var(--font-body);font-weight:600;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+nav.views{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:999px;flex-wrap:wrap}
+nav.views a{padding:7px 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:700;font-size:14px}
+nav.views a[aria-current="page"]{background:var(--ink);color:var(--card)}
+nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:999px;padding:1px 6px;margin-left:4px}
+.topctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ufbox{display:flex;align-items:center;gap:6px;background:var(--soft);border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;color:var(--muted)}
+.ufbox input{width:92px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--card);text-align:right}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.syncpill{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.syncpill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.syncpill.ok i{background:var(--verde)} .syncpill.warn i{background:var(--amarillo)}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--fucsia);border-color:var(--fucsia);color:#fff}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.danger{color:var(--rojo)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.info{border:0;background:var(--soft);color:var(--muted);width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;cursor:help;position:relative;display:inline-grid;place-items:center;padding:0;vertical-align:1px;flex:none}
+.info:hover::after,.info:focus::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:250px;background:var(--ink);color:var(--card);font-weight:500;font-size:12.5px;line-height:1.4;padding:9px 11px;border-radius:10px;text-align:left;z-index:30;white-space:normal;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+
+.view{max-width:1480px;margin:0 auto;padding:22px clamp(16px,3vw,36px) 40px}
+.ed{display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,520px);gap:22px;align-items:start}
+@media (max-width:1100px){.ed{grid-template-columns:1fr}}
+.col{display:grid;gap:18px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.card h2{font-size:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step{font-family:var(--font-body);font-size:12px;font-weight:700;color:var(--card);background:var(--ink);border-radius:999px;width:22px;height:22px;display:inline-grid;place-items:center;flex:none}
+.sub{color:var(--muted);font-size:13.5px;margin:6px 0 14px;max-width:70ch}
+.note{font-size:12.5px;color:var(--muted)}
+
+.reader textarea{width:100%;min-height:70px;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);font-size:16px}
+.reader textarea:focus{border-color:var(--fucsia);outline:none;box-shadow:0 0 0 3px var(--fucsia-soft)}
+.detected{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:28px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--ink);white-space:nowrap}
+.chip.f{background:var(--fucsia-soft);color:var(--fucsia)} .chip.v{background:var(--verde-soft);color:var(--verde)}
+.chip.c{background:var(--calipso-soft);color:var(--calipso)} .chip.w{background:var(--amarillo-soft);color:var(--amarillo)} .chip.r{background:var(--rojo-soft);color:var(--rojo)}
+.lbl{font-size:12px;color:var(--muted)}
+.types{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:14px}
+.type,.scope{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;display:grid;gap:2px}
+.type b{font-size:14px} .type span{font-size:12px;color:var(--muted)}
+.type:hover,.scope:hover{border-color:var(--ink)}
+.type[aria-pressed="true"]{border-color:var(--fucsia);background:var(--fucsia-soft)} .type[aria-pressed="true"] b{color:var(--fucsia)}
+.scopes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.scope{padding:14px;gap:6px}
+.scope b{font-size:15px;font-family:var(--font-display)}
+.scope span{font-size:12.5px;color:var(--muted)}
+.scope .dots{display:flex;gap:4px}
+.scope .dots i{width:22px;height:6px;border-radius:3px;background:var(--line)}
+.scope[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.projrow{display:grid;grid-template-columns:2fr 2fr 1fr;gap:10px;margin-top:14px}
+@media (max-width:640px){.projrow{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+.field input,.field select{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--bg);font-weight:500;font-size:15px;color:var(--ink);width:100%}
+.optrow{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px;align-items:center}
+.optrow .lab{font-size:12.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
+.tog{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer;font-size:13px;font-weight:600;background:var(--card)}
+.tog input{accent-color:var(--fucsia);width:16px;height:16px;margin:0}
+.tog:has(input:checked){border-color:var(--fucsia);background:var(--fucsia-soft)}
+.mini{width:48px;border:1px solid var(--line);border-radius:6px;padding:2px 5px;text-align:right;background:var(--card)}
+.learn{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--calipso-soft);border-radius:12px;padding:10px 12px;font-size:13.5px}
+
+.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.groups{grid-template-columns:1fr}}
+.group{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.group header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-weight:700;font-size:13.5px;border-left:5px solid var(--gc)}
+.group header small{font-weight:600;color:var(--muted)}
+.group ul{list-style:none;margin:0;padding:4px 0}
+.group li label{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:6px 12px;cursor:pointer;font-size:13.5px}
+.group li label:hover{background:var(--soft)}
+.group li input{accent-color:var(--gc);width:16px;height:16px;margin:0}
+.group li .q{font-size:12px;color:var(--muted);white-space:nowrap}
+.group li.on .q{color:var(--ink);font-weight:600}
+.g-hon{--gc:var(--fucsia)} .g-mat{--gc:var(--verde)} .g-lab{--gc:var(--calipso)} .g-log{--gc:var(--muted)} .g-adi{--gc:var(--amarillo)}
+.offscope{margin-top:10px;font-size:12.5px;color:var(--muted)}
+
+.checklist{display:grid;gap:8px}
+.ck{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ck.yes{border-left:5px solid var(--verde)} .ck.no{opacity:.7} .ck.pend{border-left:5px solid var(--amarillo)}
+.ck b{font-size:14px} .ck p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.ck .ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.ck .ctl input{width:84px;border:1px solid var(--line);border-radius:8px;padding:5px 7px;text-align:right;background:var(--bg)}
+.yn{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.yn button{border:0;background:var(--card);padding:5px 12px;cursor:pointer;font-weight:700;font-size:12.5px;color:var(--muted)}
+.yn button[aria-pressed="true"].si{background:var(--verde);color:#fff}
+.yn button[aria-pressed="true"].no{background:var(--muted);color:var(--card)}
+.progress{height:8px;background:var(--soft);border-radius:999px;overflow:hidden;margin:4px 0 12px}
+.progress i{display:block;height:100%;background:var(--verde);border-radius:999px}
+
+.dwrap{overflow-x:auto}
+.dtable{width:100%;border-collapse:collapse;font-size:13.5px}
+.dtable th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dtable th:first-child{text-align:left}
+.dtable td{padding:6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+.dtable td:first-child{text-align:left}
+.dtable tr.cat td{border-bottom:0;padding-top:16px;font-weight:700;text-align:left;font-family:var(--font-display);font-size:15px}
+.dtable tr.cat td span{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--gc);margin-right:8px}
+.dtable tr.subt td{font-weight:700;background:var(--soft)}
+.dtable input{width:84px;border:1px solid var(--line);border-radius:8px;padding:5px 7px;text-align:right;background:var(--bg)}
+.dtable input.q{width:58px} .dtable input.nm{width:100%;min-width:160px;text-align:left}
+.dtable input.adj{border-color:var(--fucsia);background:var(--fucsia-soft)}
+.dtable .unit{color:var(--muted);font-size:12px;white-space:nowrap}
+.dtable .alt{display:block;color:var(--muted);font-size:11.5px}
+.reset{border:0;background:transparent;color:var(--fucsia);cursor:pointer;font-size:13px;padding:2px 4px}
+.est{font-size:10.5px;font-weight:700;color:var(--amarillo);background:var(--amarillo-soft);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+
+/* Finanzas */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.tiers{grid-template-columns:1fr}}
+.tier{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;background:var(--card);text-align:left;display:grid;gap:2px}
+.tier small{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.tier b{font-family:var(--font-display);font-size:22px}
+.tier span{font-size:12px;color:var(--muted)}
+.tier.min small{color:var(--rojo)} .tier.rec small{color:var(--verde)} .tier.ideal small{color:var(--calipso)}
+.tier[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.light{display:flex;align-items:center;gap:12px;border-radius:14px;padding:14px 16px;margin-top:12px;font-size:14px}
+.light .dot{width:16px;height:16px;border-radius:50%;flex:none}
+.light.verde{background:var(--verde-soft)} .light.verde .dot{background:var(--verde)}
+.light.amarillo{background:var(--amarillo-soft)} .light.amarillo .dot{background:var(--amarillo)}
+.light.rojo{background:var(--rojo-soft)} .light.rojo .dot{background:var(--rojo)}
+.light b{display:block;font-size:15px}
+.flow{margin-top:16px}
+.flowbar{display:flex;height:22px;border-radius:8px;overflow:hidden;background:var(--soft)}
+.flowbar i{display:block;height:100%}
+.flowleg{display:grid;gap:6px;margin-top:10px;font-size:13.5px}
+.flowleg div{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center}
+.flowleg b.sw{width:12px;height:12px;border-radius:3px;display:block}
+.flowleg .big{font-weight:800;font-family:var(--font-display);font-size:17px}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:6px;font-size:13.5px}
+.box h3{font-size:15px;display:flex;gap:8px;align-items:center}
+.box.ok{border-left:5px solid var(--verde)} .box.warn{border-left:5px solid var(--amarillo)} .box.bad{border-left:5px solid var(--rojo)} .box.info{border-left:5px solid var(--calipso)}
+.box input,.box select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);width:100%}
+.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inline input{width:auto;flex:1;min-width:90px}
+.inline input[type=checkbox]{flex:none;min-width:0}
+
+/* Documento */
+.docside{position:sticky;top:12px;display:grid;gap:10px}
+@media (max-width:1100px){.docside{position:static}}
+.dochead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.dochead select{border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--card);font-weight:600;font-size:13px}
+.docscroll{max-height:calc(100vh - 190px);overflow:auto;border-radius:12px;border:1px solid var(--line);background:#e9eef0;padding:14px}
+@media (max-width:1100px){.docscroll{max-height:none}}
+.status{font-size:12.5px;color:var(--muted);min-height:18px}
+
+/* Barra inferior */
+.bottombar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);z-index:20;display:flex;gap:14px 22px;align-items:center;justify-content:space-between;padding:10px clamp(16px,3vw,36px);flex-wrap:wrap;box-shadow:0 -6px 24px rgba(0,0,0,.06)}
+.bottombar .grp{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.bb{display:grid;line-height:1.15}
+.bb span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.bb b{font-family:var(--font-display);font-size:19px}
+.sem{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;padding:6px 12px;border-radius:999px}
+.sem i{width:12px;height:12px;border-radius:50%}
+.sem.verde{background:var(--verde-soft);color:var(--verde)} .sem.verde i{background:var(--verde)}
+.sem.amarillo{background:var(--amarillo-soft);color:var(--amarillo)} .sem.amarillo i{background:var(--amarillo)}
+.sem.rojo{background:var(--rojo-soft);color:var(--rojo)} .sem.rojo i{background:var(--rojo)}
+.sem.gris{background:var(--soft);color:var(--muted)} .sem.gris i{background:var(--muted)}
+
+/* Listas y tablas base */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.toolbar input[type=search]{border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--card);min-width:220px}
+.qlist{display:grid;gap:10px}
+.qrow{display:grid;grid-template-columns:110px minmax(0,1.6fr) 1fr 130px 120px auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+@media (max-width:900px){.qrow{grid-template-columns:1fr 1fr}}
+.qrow .num{font-weight:800;font-family:var(--font-display)}
+.qrow .num small{display:block;font-family:var(--font-body);font-weight:500;color:var(--muted);font-size:12px}
+.qrow .nm b{display:block} .qrow .nm span{font-size:12.5px;color:var(--muted)}
+.qrow .amt{text-align:right;font-weight:700} .qrow .amt small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.qrow .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.st{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;display:inline-block}
+.st-borrador{background:var(--soft);color:var(--muted)} .st-enviada{background:var(--calipso-soft);color:var(--calipso)}
+.st-aceptada{background:var(--verde-soft);color:var(--verde)} .st-rechazada{background:var(--rojo-soft);color:var(--rojo)} .st-cerrada{background:var(--ink);color:var(--card)}
+.closer{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:12px}
+.closer .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.empty{color:var(--muted);font-size:14px;padding:18px;text-align:center;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi span{font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{display:block;font-family:var(--font-display);font-size:24px;margin-top:2px}
+.kpi small{color:var(--muted)}
+.meter{height:16px;border-radius:999px;background:var(--soft);overflow:hidden;position:relative;margin:10px 0}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--fucsia),var(--calipso))}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+.tabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:600;font-size:13px}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.btable{width:100%;border-collapse:collapse;font-size:14px}
+.btable th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px;border-bottom:1px solid var(--line)}
+.btable td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.btable .r{text-align:right}
+.btable input[type=text]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);width:100%;max-width:150px;text-align:right}
+.btable input.name{max-width:none;text-align:left}
+.btable a{color:var(--calipso)}
+.old{background:var(--amarillo-soft);color:var(--amarillo);font-weight:700;font-size:12px;border-radius:6px;padding:2px 6px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:860px){.split{grid-template-columns:1fr}}
+.hiddenfile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.banner{background:var(--amarillo-soft);color:var(--amarillo);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+</style>
+<style id="paperCss">
+/* Documento de cotización (siempre en claro, como papel) */
+.paper{background:#fff;color:#1b1d22;font-family:"Figtree",Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;max-width:760px;margin:0 auto;padding:30px 32px 26px;border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+.paper .pb{height:6px;background:linear-gradient(90deg,#d4167e 0 33.3%,#1c9a55 33.3% 66.6%,#0aa9bb 66.6%);margin:-30px -32px 22px;border-radius:6px 6px 0 0}
+.paper .ph{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.paper .pl img{max-height:58px;max-width:200px}
+.paper .wm{font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:800;font-size:30px;line-height:1;letter-spacing:-1px}
+.paper .wm small{display:block;font:600 10px Arial,sans-serif;letter-spacing:4px;color:#666;margin-top:4px}
+.paper .studio{font-size:11.5px;color:#555;margin-top:8px}
+.paper .meta{text-align:right;font-size:12px;color:#444}
+.paper .meta b{display:block;font-size:17px;color:#1b1d22;font-family:"Bricolage Grotesque",Arial,sans-serif}
+.paper h1{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:22px;margin:22px 0 2px;letter-spacing:-.3px}
+.paper .for{color:#555;margin:0 0 16px}
+.paper table{width:100%;border-collapse:collapse}
+.paper th{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#666;text-align:left;padding:6px 0;border-bottom:2px solid #1b1d22}
+.paper th.r,.paper td.r{text-align:right}
+.paper td{padding:6px 0;border-bottom:1px solid #e6e9eb;vertical-align:top}
+.paper td .d{display:block;color:#666;font-size:11.5px}
+.paper tr.sec td{border-bottom:0;padding-top:14px;font-weight:700;font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:14px}
+.paper tr.sec td i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px}
+.paper tr.tot td{font-weight:700;border-bottom:0;padding-top:10px}
+.paper tr.grand td{background:#fde7f2;font-weight:800;font-size:15px;padding:10px 8px}
+.paper .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.paper h3{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:13.5px;margin:0 0 6px}
+.paper ul{margin:0;padding-left:16px;color:#444;font-size:12px}
+.paper .foot{margin-top:20px;padding-top:10px;border-top:1px solid #e6e9eb;font-size:11px;color:#777;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.paper .ver{font-size:11px;color:#777;margin-top:4px}
+@media (max-width:560px){.paper{padding:22px 18px}.paper .pb{margin:-22px -18px 18px}.paper .cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="brandbar"></div>
+<header class="top">
+  <div class="logo"><div id="logoSlot"></div></div>
+  <nav class="views" aria-label="Secciones">
+    <a href="#cotizar" data-view="cotizar">Cotizar</a>
+    <a href="#cotizaciones" data-view="cotizaciones">Cotizaciones<span class="n" id="navCount" hidden></span></a>
+    <a href="#mes" data-view="mes">Mi mes</a>
+    <a href="#valores" data-view="valores">Valores base</a>
+  </nav>
+  <div class="topctl">
+    <label class="ufbox" for="ufTop">UF $<input id="ufTop" type="text" inputmode="decimal"></label>
+    <div class="seg" role="group" aria-label="Moneda para mostrar">
+      <button type="button" data-mode="CLP" aria-pressed="true">CLP</button>
+      <button type="button" data-mode="UF" aria-pressed="false">UF</button>
+    </div>
+    <span class="syncpill" id="sync"><i></i><span>Conectando…</span></span>
+  </div>
+</header>
+
+<!-- ============ COTIZAR ============ -->
+<section class="view" id="v-cotizar">
+  <div class="ed">
+    <div class="col">
+      <section class="card reader" aria-labelledby="h1r">
+        <h2 id="h1r"><span class="step">1</span>Describe el encargo</h2>
+        <p class="sub">Escríbelo como lo pidió el cliente. Se reconocen el tipo de servicio, los m² y extras como montaje de noche, gráfica, iluminación, urgencia o regiones.</p>
+        <textarea id="brief" aria-label="Descripción del encargo" placeholder="Ej: Stand de 3x6 m para feria en Concepción, con iluminación, mobiliario y desmontaje"></textarea>
+        <div class="detected" id="detected" aria-live="polite"></div>
+        <div class="types" id="types" role="group" aria-label="Tipo de servicio"></div>
+        <div class="projrow">
+          <label class="field" for="qName">Proyecto<input id="qName" type="text" placeholder="Nombre del proyecto"></label>
+          <label class="field" for="qClient">Cliente<input id="qClient" type="text" placeholder="Empresa o persona"></label>
+          <label class="field" for="qM2">Superficie m²<input id="qM2" type="text" inputmode="decimal"></label>
+        </div>
+        <div class="optrow" id="optrow"></div>
+        <div id="learnBox"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h2s">
+        <h2 id="h2s"><span class="step">2</span>¿Qué van a hacer ustedes?</h2>
+        <p class="sub">Elige el alcance. Si es sólo diseño, la cotización lleva el detalle del diseño y nada de materiales ni montaje.</p>
+        <div class="scopes" id="scopes" role="group" aria-label="Alcance"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h3p">
+        <h2 id="h3p"><span class="step">3</span>Marca las partidas</h2>
+        <p class="sub">Cada partida que marcas aparece en la cotización de la derecha. Las cantidades salen del tipo de servicio y los m²; se ajustan en el paso 5.</p>
+        <div class="groups" id="groups"></div>
+        <div class="offscope" id="offscope"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h4c">
+        <h2 id="h4c"><span class="step">4</span>¿Consideraron esto?<button class="info" type="button" data-tip="Son los gastos que casi nadie cobra y que salen de su bolsillo. Respondan sí o no a cada uno: si es sí, se suma a la cotización.">i</button></h2>
+        <p class="sub">Costos que se olvidan y terminan saliendo de su ganancia.</p>
+        <div id="ckProgress"></div>
+        <div class="checklist" id="checklist"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h5d">
+        <h2 id="h5d"><span class="step">5</span>Desglose y valores</h2>
+        <p class="sub">Cambia cantidades y valores sólo para esta cotización (quedan en fucsia; ↺ vuelve al valor base). Las horas se cobran en UF.</p>
+        <div class="dwrap"><table class="dtable" id="dtable"></table></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" type="button" id="addAdic">+ Agregar adicional</button><span class="note">Para cambios o extras que pida el cliente después de enviada la cotización.</span></div>
+      </section>
+
+      <section class="card" aria-labelledby="h6f">
+        <h2 id="h6f"><span class="step">6</span>¿Cuánto cobrar para no perder plata?</h2>
+        <div id="finance"></div>
+      </section>
+    </div>
+
+    <aside class="docside" aria-label="Cotización generada">
+      <div class="dochead">
+        <h2 style="font-size:18px">Cotización</h2>
+        <div class="inline">
+          <label for="qStatus" class="lbl">Estado</label>
+          <select id="qStatus"><option value="borrador">Borrador</option><option value="enviada">Enviada</option><option value="aceptada">Aceptada</option><option value="rechazada">Rechazada</option><option value="cerrada">Cerrada</option></select>
+          <label class="tog" for="showMat" style="padding:4px 10px 4px 6px"><input type="checkbox" id="showMat">Detallar materiales</label>
+        </div>
+      </div>
+      <div class="docscroll"><div id="paper"></div></div>
+      <div class="inline">
+        <button class="btn primary" type="button" id="btnDl" hidden>Descargar cotización</button>
+        <button class="btn" type="button" id="btnCopy">Copiar resumen</button>
+        <button class="btn" type="button" id="btnCsv" hidden>Desglose CSV</button>
+        <button class="btn" type="button" id="btnDup">Duplicar</button>
+        <button class="btn ghost" type="button" id="btnNew">Nueva cotización</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ COTIZACIONES ============ -->
+<section class="view" id="v-cotizaciones" hidden>
+  <div class="toolbar">
+    <h2 style="font-size:24px">Cotizaciones</h2>
+    <div class="inline">
+      <input type="search" id="qSearch" placeholder="Buscar por proyecto, cliente o N°" aria-label="Buscar cotizaciones">
+      <div class="seg" role="group" aria-label="Filtrar por estado" id="stFilter"></div>
+      <button class="btn primary" type="button" id="btnNew2">Nueva cotización</button>
+    </div>
+  </div>
+  <div id="localBanner"></div>
+  <div class="qlist" id="qlist"></div>
+</section>
+
+<!-- ============ MI MES ============ -->
+<section class="view" id="v-mes" hidden>
+  <div class="toolbar">
+    <h2 style="font-size:24px">Mi mes</h2>
+    <label class="inline lbl" for="mesSel">Mes <input type="month" id="mesSel" style="border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card)"></label>
+  </div>
+  <div id="mesBody"></div>
+</section>
+
+<!-- ============ VALORES ============ -->
+<section class="view" id="v-valores" hidden>
+  <div class="card">
+    <h2>Valores base del estudio</h2>
+    <p class="sub">Aplican a todas las cotizaciones nuevas y se guardan solos para las dos. Los precios de materiales y maestros llevan fecha: si tienen más de 60 días se marcan en amarillo para que los revisen.</p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="tabBody"></div>
+  </div>
+</section>
+
+<div class="bottombar" id="bottombar">
+  <div class="grp">
+    <span class="sem gris" id="bbSem"><i></i><span>Sin partidas</span></span>
+    <div class="bb"><span>Precio neto</span><b id="bbNeto">$0</b></div>
+    <div class="bb"><span>Total a cobrar</span><b id="bbTotal">$0</b></div>
+    <div class="bb"><span>Les queda de ganancia</span><b id="bbGan">$0</b></div>
+  </div>
+  <div class="grp"><span class="lbl" id="bbNum"></span><a class="btn dark" href="#cotizaciones">Ver todas</a></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const TODAY = new Date().toISOString().slice(0,10);
+const F = "2026-11-14";
+const DEFAULT_BASE = {
+  v:2, logo:null,
+  estudio:{nombre:"Popurrí Estudio", lema:"Dirección creativa · diseño · producción · montaje", rut:"", correo:"", telefono:"", instagram:"", ciudad:"Santiago, Chile"},
+  params:{uf:41300, iva:0.19, ret:0.1525, horasSemana:42, semanas:47, pctFact:0.6, margen:0.25, merma:0.1, fee:0.2, cont:0.1, noct:0.4, urg:0.25,
+    minUF:15, premium:0.15, antMin:0.5, tarjeta:0.03, interes:0.015, cxSimple:0.8, cxComplejo:1.4, mkLo:150000, mkHi:500000, validez:15, rondas:2},
+  socias:[{n:"Socia 1",v:1800000},{n:"Socia 2",v:1800000}],
+  gastos:[{n:"Arriendo taller / cowork",v:350000},{n:"Software (Adobe, SketchUp, AutoCAD/Rhino, render)",v:180000},{n:"Contador y gastos legales",v:120000},{n:"Internet y telefonía",v:60000},{n:"Bencina, estacionamientos y traslados",v:120000},{n:"Marketing (redes, web, portafolio)",v:100000},{n:"Herramientas: reposición y mantención",v:80000},{n:"Banco, comisiones y otros",v:50000},{n:"Capacitación y suscripciones",v:40000}],
+  roles:{dir:{n:"Dirección creativa",uf:1.2},dis:{n:"Diseño",uf:0.9},prod:{n:"Producción y montaje",uf:0.7}},
+  catalog:[
+    {id:"h_visita",cat:"hon",n:"Visita técnica y levantamiento",u:"visita",hpu:2,role:"prod",d:"Visita al lugar, medidas y fotos"},
+    {id:"h_concepto",cat:"hon",n:"Concepto creativo y moodboard",u:"h",hpu:1,role:"dir",d:"Idea central, referencias y propuesta de estilo"},
+    {id:"h_layout",cat:"hon",n:"Layout y planta de distribución",u:"h",hpu:1,role:"dis",d:"Distribución del espacio y recorridos"},
+    {id:"h_render",cat:"hon",n:"Renders 3D",u:"vista",hpu:3,role:"dis",d:"Imágenes 3D fotorrealistas para aprobar el diseño"},
+    {id:"h_planos",cat:"hon",n:"Planos de fabricación y detalles constructivos",u:"lámina",hpu:3,role:"dis",d:"Planos acotados para el taller"},
+    {id:"h_espec",cat:"hon",n:"Especificación de materiales y terminaciones",u:"h",hpu:1,role:"dis",d:"Lista de materiales, colores y proveedores sugeridos"},
+    {id:"h_grafica",cat:"hon",n:"Diseño de gráficas e impresos",u:"pieza",hpu:2,role:"dis",d:"Piezas gráficas listas para imprimir"},
+    {id:"h_prod",cat:"hon",n:"Producción, compras y coordinación",u:"h",hpu:1,role:"prod",d:"Cotizar y comprar, coordinar taller y proveedores"},
+    {id:"h_sup",cat:"hon",n:"Supervisión de montaje y desmontaje",u:"h",hpu:1,role:"prod",d:"Presencia en el montaje y entrega del espacio"},
+    {id:"h_arte",cat:"hon",n:"Dirección de arte en terreno",u:"jornada",hpu:8,role:"dir",d:"Jornada de 8 horas en rodaje, sesión o evento"},
+    {id:"m_ter9",cat:"mat",n:"Terciado estructural pino 9 mm",u:"plancha",p:18980,src:"Sodimac",f:F},
+    {id:"m_ter12",cat:"mat",n:"Terciado estructural pino 12 mm",u:"plancha",p:20690,src:"Sodimac",f:F},
+    {id:"m_ter15",cat:"mat",n:"Terciado estructural pino 15 mm",u:"plancha",p:21430,src:"Sodimac",f:F},
+    {id:"m_ter18",cat:"mat",n:"Terciado estructural pino 18 mm",u:"plancha",p:23450,src:"Sodimac",f:F},
+    {id:"m_osb15",cat:"mat",n:"OSB estructural 15 mm",u:"plancha",p:23290,src:"Sodimac",f:F},
+    {id:"m_mue15",cat:"mat",n:"Terciado mueblería natural 15 mm",u:"plancha",p:37290,src:"Sodimac",f:F},
+    {id:"m_mue18",cat:"mat",n:"Terciado mueblería natural 18 mm",u:"plancha",p:43390,src:"Sodimac",f:F},
+    {id:"m_marino18",cat:"mat",n:"Terciado marino 18 mm",u:"plancha",p:53990,src:"Sodimac",f:F},
+    {id:"m_mdf3",cat:"mat",n:"MDF blanco 3 mm",u:"plancha",p:12990,src:"Sodimac",f:F},
+    {id:"m_pintura",cat:"mat",n:"Pintura y terminaciones",u:"global",p:150000,est:true,f:F},
+    {id:"m_ferr",cat:"mat",n:"Ferretería y fijaciones",u:"global",p:80000,est:true,f:F},
+    {id:"m_impresion",cat:"mat",n:"Impresión gráfica (tela o vinilo)",u:"m²",p:18000,est:true,f:F},
+    {id:"m_led",cat:"mat",n:"Iluminación LED (cinta + fuentes)",u:"global",p:200000,est:true,f:F},
+    {id:"m_perfil",cat:"mat",n:"Perfil metálico (tira 6 m)",u:"tira",p:9000,est:true,f:F},
+    {id:"l_jefe",cat:"lab",n:"Jefe de montaje / maestro mayor",u:"jornada",p:97500,night:true,src:"OneEstimate",f:F},
+    {id:"l_soldador",cat:"lab",n:"Soldador",u:"jornada",p:92500,src:"OneEstimate",f:F},
+    {id:"l_elec",cat:"lab",n:"Electricista",u:"jornada",p:83500,night:true,src:"OneEstimate",f:F},
+    {id:"l_carp",cat:"lab",n:"Carpintero",u:"jornada",p:78000,src:"OneEstimate",f:F},
+    {id:"l_pintor",cat:"lab",n:"Pintor",u:"jornada",p:63500,src:"OneEstimate",f:F},
+    {id:"l_ayud",cat:"lab",n:"Ayudante / peoneta",u:"jornada",p:47000,src:"OneEstimate",f:F},
+    {id:"l_montajista",cat:"lab",n:"Montajista",u:"jornada",p:60000,night:true,est:true,f:F},
+    {id:"g_flete",cat:"log",n:"Flete camión en Santiago",u:"viaje",p:150000,src:"Cronoshare",f:F},
+    {id:"g_audio",cat:"log",n:"Audio + iluminación básica con técnico",u:"jornada",p:200000,src:"2x3",f:F},
+    {id:"g_viatico",cat:"log",n:"Viáticos fuera de Santiago",u:"persona/día",p:60000,est:true,f:F},
+    {id:"g_bodega",cat:"log",n:"Bodegaje de estructura",u:"mes",p:80000,est:true,f:F},
+    {id:"g_estac",cat:"log",n:"Estacionamiento y permisos de carga",u:"global",p:30000,est:true,f:F}
+  ]
+};
+const CATS = {
+  hon:{n:"Diseño y dirección creativa", short:"Diseño", cls:"g-hon", col:"#d4167e"},
+  mat:{n:"Materiales", short:"Materiales", cls:"g-mat", col:"#1c9a55"},
+  lab:{n:"Mano de obra de terceros", short:"Mano de obra", cls:"g-lab", col:"#0aa9bb"},
+  log:{n:"Logística y arriendos", short:"Logística", cls:"g-log", col:"#8a949e"}
+};
+const SCOPES = {
+  diseno:{n:"Sólo diseño", d:"Concepto, renders y planos. Ellos fabrican con quien quieran.", cats:["hon"], dots:["#d4167e"]},
+  disemat:{n:"Diseño + materiales", d:"Diseñan y compran los materiales; el cliente pone la mano de obra.", cats:["hon","mat","log"], dots:["#d4167e","#1c9a55"]},
+  llave:{n:"Llave en mano", d:"Diseño, fabricación, montaje y desmontaje.", cats:["hon","mat","lab","log"], dots:["#d4167e","#1c9a55","#0aa9bb"]},
+  montaje:{n:"Sólo montaje", d:"Instalan algo ya diseñado o fabricado.", cats:["hon","mat","lab","log"], dots:["#0aa9bb"]}
+};
+const C=Math.ceil, R=Math.round, M=Math.max;
+const TEMPLATES = {
+  popup:{n:"Pop-up", d:"Tienda temporal, isla", m2:12, noct:true, scope:"llave", it:{
+    h_concepto:m=>M(6,R(4+0.5*m)), h_layout:m=>M(4,R(2+0.3*m)), h_render:m=>M(2,C(m/6)), h_planos:m=>M(2,C(m/4)), h_espec:()=>2, h_prod:m=>M(8,R(4+m)), h_sup:m=>M(6,R(4+0.5*m)),
+    m_mue15:m=>C(m), m_ter18:m=>C(m*0.5), m_mdf3:m=>C(m/3), m_pintura:m=>C(m/12), m_ferr:m=>C(m/12), m_impresion:m=>R(m*0.67), m_led:m=>C(m/12),
+    l_carp:m=>C(m/3), l_ayud:m=>C(m/3), l_elec:m=>C(m/12), l_pintor:m=>C(m/6), l_montajista:m=>C(m/6)*2, g_flete:()=>2 }},
+  stand:{n:"Stand de feria", d:"Expo, congreso", m2:18, noct:false, scope:"llave", it:{
+    h_concepto:m=>M(6,R(4+0.4*m)), h_layout:m=>M(4,R(2+0.3*m)), h_render:m=>M(3,C(m/6)), h_planos:m=>M(3,C(m/5)), h_espec:()=>2, h_grafica:m=>M(2,C(m/9)), h_prod:m=>M(10,R(6+0.6*m)), h_sup:m=>M(8,R(6+0.3*m)),
+    m_ter18:m=>C(m*0.8), m_mue15:m=>C(m*0.4), m_mdf3:m=>C(m/4), m_pintura:m=>C(m/15), m_ferr:m=>C(m/15), m_impresion:m=>R(m), m_led:m=>C(m/15),
+    l_carp:m=>C(m/3), l_ayud:m=>C(m/3), l_elec:m=>C(m/12), l_pintor:m=>C(m/8), l_montajista:m=>C(m/6)*2, l_jefe:()=>2, g_flete:()=>2 }},
+  escenografia:{n:"Escenografía", d:"Teatro, set, escenario", m2:30, noct:false, scope:"llave", it:{
+    h_concepto:m=>M(8,R(6+0.3*m)), h_layout:m=>M(4,R(2+0.2*m)), h_render:m=>M(3,C(m/10)), h_planos:m=>M(3,C(m/8)), h_espec:()=>3, h_prod:m=>M(10,R(6+0.5*m)), h_sup:m=>M(8,R(4+0.3*m)),
+    m_ter18:m=>C(m*0.6), m_osb15:m=>C(m*0.3), m_ter9:m=>C(m*0.3), m_pintura:m=>C(m/10), m_ferr:m=>C(m/15), m_impresion:m=>R(m*0.5),
+    l_carp:m=>C(m/4), l_ayud:m=>C(m/4), l_pintor:m=>C(m/6), l_soldador:m=>C(m/30), l_montajista:m=>C(m/10)*2, g_flete:()=>2 }},
+  montaje:{n:"Montaje", d:"Instalar algo ya hecho", m2:20, noct:false, scope:"montaje", it:{
+    h_visita:()=>1, h_prod:m=>M(4,R(2+0.2*m)), h_sup:m=>M(6,R(4+0.3*m)),
+    m_ferr:()=>1, l_jefe:m=>C(m/20)+1, l_montajista:m=>C(m/8)*2, l_ayud:m=>C(m/10), g_flete:()=>2 }},
+  evento:{n:"Evento / activación", d:"Lanzamiento, ambientación", m2:60, noct:false, scope:"llave", it:{
+    h_concepto:m=>M(6,R(4+0.1*m)), h_layout:()=>4, h_render:()=>2, h_grafica:()=>3, h_prod:m=>M(12,R(8+0.15*m)), h_arte:()=>1,
+    m_impresion:m=>R(m*0.2), m_led:m=>C(m/40), m_ferr:()=>1, l_montajista:()=>4, l_ayud:()=>2, g_audio:()=>1, g_flete:()=>2 }},
+  vitrina:{n:"Vitrina", d:"Visual merchandising", m2:4, noct:true, scope:"llave", it:{
+    h_concepto:m=>M(4,R(2+0.5*m)), h_render:()=>2, h_planos:()=>1, h_prod:m=>M(4,R(2+m)), h_sup:()=>4,
+    m_mue15:m=>C(m), m_mdf3:m=>C(m/2), m_pintura:()=>1, m_ferr:()=>1, m_impresion:m=>R(m), m_led:()=>1,
+    l_carp:m=>C(m/2), l_ayud:m=>C(m/2), l_montajista:()=>2, g_flete:()=>2 }},
+  interior:{n:"Interiorismo comercial", d:"Local, oficina, showroom", m2:40, noct:false, scope:"diseno", it:{
+    h_visita:()=>1, h_concepto:m=>M(6,R(4+0.1*m)), h_layout:m=>M(6,R(4+0.15*m)), h_render:m=>M(3,C(m/12)), h_planos:m=>M(4,C(m/8)), h_espec:m=>M(3,R(2+0.05*m)) }},
+  direccion:{n:"Dirección de arte", d:"Foto, rodaje, campaña", m2:0, noct:false, scope:"diseno", it:{
+    h_concepto:()=>6, h_espec:()=>3, h_arte:()=>1, h_prod:()=>4 }}
+};
+const TYPE_RULES = [
+  ["SCOPE:diseno", /solo (el |un )?(diseno|render|proyecto|planos)/],
+  ["montaje", /solo (el )?(montaje|armado|instalacion)/],
+  ["popup", /pop.?up|tienda temporal|isla comercial|modulo de venta|kiosko|quiosco/],
+  ["stand", /\bstand|feria|\bexpo|exhibicion|congreso/],
+  ["vitrina", /vitrina|escaparate|visual merch/],
+  ["escenografia", /escenograf|teatro|escenario|tarima|\bset\b/],
+  ["direccion", /direccion de arte|sesion de fotos|shooting|rodaje|campana|editorial/],
+  ["evento", /evento|lanzamiento|matrimonio|boda|activacion|fiesta|cumpleanos|ambientacion|decoracion/],
+  ["interior", /interiorismo|local comercial|oficina|showroom|remodela|habilitacion|tienda/],
+  ["montaje", /montaje|instalacion|armado|instalar/]
+];
+const MODS = [
+  {k:"grafica", label:"Gráfica", re:/grafica|impres|vinilo|banner|lona|senaletica|letrero/, on:["m_impresion","h_grafica"]},
+  {k:"render", label:"Renders", re:/render|3d|visualizacion/, on:["h_render"]},
+  {k:"luz", label:"Iluminación", re:/\bluz|luces|ilumina|\bled\b/, on:["m_led","l_elec"]},
+  {k:"audio", label:"Audio", re:/audio|sonido|parlante/, on:["g_audio"]},
+  {k:"mueble", label:"Mobiliario", re:/mueble|mobiliario|\bmesa|counter|meson|repisa|estanteria|exhibidor/, on:["m_mue18","l_carp"]},
+  {k:"metal", label:"Estructura metálica", re:/metal|fierro|acero|soldad/, on:["l_soldador","m_perfil"]},
+  {k:"pintura", label:"Pintura", re:/pintura|pintar/, on:["m_pintura","l_pintor"]},
+  {k:"desmontaje", label:"Desmontaje", re:/desmontaje|desarme|retiro/, on:["h_sup","g_flete"]},
+  {k:"bodega", label:"Bodegaje", re:/bodega|almacenaje|guardar la estructura|reutiliz/, on:["g_bodega"]},
+  {k:"region", label:"Fuera de Santiago", re:/region|vina|valparaiso|concepcion|antofagasta|la serena|temuco|puerto montt|rancagua|talca|chillan|las trancas|fuera de santiago|iquique|calama/, on:["g_viatico"]},
+  {k:"visita", label:"Visita técnica", re:/visita|levantamiento|medir/, on:["h_visita"]}
+];
+// Costos olvidados. kind: h (horas de un rol), clp (monto), pct (sobre costos directos), pay (comisión sobre el cobro)
+const EXTRAS = [
+  {k:"reuniones", n:"Reuniones con el cliente", p:"Presentar, aprobar, resolver dudas. ¿Cuántas reuniones?", kind:"h", role:"dir", per:1.5, unit:"reuniones", def:3, scopes:"all"},
+  {k:"cambios", n:"Cambios más allá de lo incluido", p:"Si el cliente suele cambiar mucho, reserven horas de diseño.", kind:"h", role:"dis", per:1, unit:"h", def:4, scopes:"all"},
+  {k:"compras", n:"Tiempo de compras y cotizar proveedores", p:"Ir al Sodimac, cotizar imprentas, coordinar despachos.", kind:"h", role:"prod", per:1, unit:"h", def:4, scopes:["disemat","llave","montaje"]},
+  {k:"traslados", n:"Sus propios traslados", p:"Bencina, estacionamiento, Uber de ustedes para visitas y montaje.", kind:"clp", unit:"$", def:40000, scopes:"all"},
+  {k:"embalaje", n:"Embalaje y protección para el traslado", p:"Film, cartón, mantas, cinta.", kind:"clp", unit:"$", def:30000, scopes:["disemat","llave","montaje"]},
+  {k:"seguro", n:"Seguro o garantía exigida por el recinto", p:"Malls y ferias a veces piden póliza de responsabilidad civil.", kind:"clp", unit:"$", def:60000, scopes:["llave","montaje"]},
+  {k:"reserva", n:"Reserva para reparaciones después del evento", p:"Retoques, piezas que se dañan, una visita extra.", kind:"pct", unit:"% de costos", def:5, scopes:["llave","montaje"]},
+  {k:"tarjeta", n:"¿Les pagarán con tarjeta o link de pago?", p:"Transbank o similar cobra una comisión sobre lo que reciben.", kind:"pay", unit:"% comisión", def:3, scopes:"all"}
+];
+const TIP = {
+  costoH:"Lo que les cuesta cada hora de trabajo: sus sueldos más los gastos fijos del estudio, divididos por las horas que de verdad pueden cobrar.",
+  minimo:"Cubre todo (sus horas a costo, materiales, maestros, imprevistos) sin ganar nada. Bajo este precio pierden plata.",
+  rec:"Cubre todo y deja el margen del estudio. Es el precio que deberían cobrar casi siempre.",
+  ideal:"Precio recomendado + un extra para clientes grandes, marcas conocidas o encargos complejos.",
+  fee:"Lo que cobran por gestionar compras, proveedores y maestros. Paga su tiempo y el riesgo de responder por terceros.",
+  cont:"Colchón para imprevistos: la plancha que se raja, el flete que se atrasa. Si no se usa, es ganancia.",
+  merma:"Material que se pierde en cortes y errores. Siempre se compra un poco más.",
+  anticipo:"Lo que piden antes de partir. Se calcula para que con el anticipo paguen todos los materiales y maestros sin poner plata propia.",
+  iva:"El IVA no es de ustedes: lo cobran al cliente y lo pagan al SII cada mes.",
+  boleta:"Con boleta de honorarios no se cobra IVA, pero la empresa cliente retiene 15,25% y lo paga al SII por ustedes. Por eso la boleta se emite por un monto mayor.",
+  queda:"Lo que queda después de pagar proveedores, maestros, IVA y sus propias horas a costo. Es la ganancia real del estudio.",
+  cx:"Ajusta todas las horas de diseño y producción. Simple −20%, complejo +40%. Equivocarse en horas es el error más caro.",
+  plazo:"Si la empresa paga a 30, 60 o 90 días, ustedes esperan esa plata. Se cobra un pequeño interés por el saldo.",
+  urg:"Encargos para menos de 10 días hábiles: trabajan de noche, pagan despachos urgentes y dejan otros proyectos.",
+  noct:"Malls y ferias montan de noche o en fin de semana: los maestros cobran más."
+};
+
+// ---------- estado ----------
+let base = clone(DEFAULT_BASE);
+let quotes = {};           // id -> quote
+let q = null;               // cotización abierta
+let mode = "CLP";
+let view = "cotizar";
+let tab = "estudio";
+let stFilter = "todas";
+let lastSig = "";
+let db = null, downloadsNS = null, online = false;
+let editedThisOpen = false;
+let closingId = null;
+let confirmDel = null;
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function cat(id){return base.catalog.find(c=>c.id===id)}
+function newQuote(){return {id:uid("q_"), num:null, ver:1, status:"borrador", createdAt:Date.now(), updatedAt:Date.now(), acceptedAt:null,
+  nombre:"", cliente:"", texto:"", tipo:null, alcance:"llave", m2:0, cx:"normal", noct:false, urg:false, plazo:0, tier:"rec", desc:0,
+  presupuesto:0, doc:"factura", showMat:false, ant:null, learn:0, lines:{}, extras:{}, adic:[], hist:[], cierre:null, snap:null}}
+
+// ---------- números ----------
+const fmtCLP = v => (v<0?"−":"")+"$"+Math.abs(Math.round(v||0)).toLocaleString("es-CL");
+const fmtUFn = (v,d=2) => (v||0).toLocaleString("es-CL",{minimumFractionDigits:d,maximumFractionDigits:d});
+const toUF = clp => clp/(base.params.uf||1);
+const money = clp => mode==="UF" ? fmtUFn(toUF(clp))+" UF" : fmtCLP(clp);
+const moneyAlt = clp => mode==="UF" ? fmtCLP(clp) : fmtUFn(toUF(clp))+" UF";
+const pct = (v,d=0) => ((v||0)*100).toLocaleString("es-CL",{maximumFractionDigits:d})+"%";
+const numIn = (v,d=0) => (v||0).toLocaleString("es-CL",{maximumFractionDigits:d});
+function parseNum(s){
+  if(typeof s==="number") return s;
+  s=String(s||"").replace(/\$|uf|%|\s/gi,""); if(!s) return 0;
+  if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,"");
+  const n=parseFloat(s); return isFinite(n)?n:0;
+}
+const norm = t => String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tip = k => `<button class="info" type="button" data-tip="${esc(TIP[k])}" aria-label="Qué es esto">i</button>`;
+const daysOld = f => f? Math.floor((Date.now()-new Date(f+"T12:00:00").getTime())/864e5) : 999;
+const fdate = t => new Date(t).toLocaleDateString("es-CL",{day:"numeric",month:"short",year:"numeric"});
+
+// ---------- modelo de la hora ----------
+function hourModel(){
+  const P=base.params;
+  const brutos=base.socias.reduce((a,x)=>a+x.v/(1-P.ret),0);
+  const gastos=base.gastos.reduce((a,x)=>a+x.v,0);
+  const hDisp=P.horasSemana*P.semanas/12;
+  const hFact=hDisp*P.pctFact*Math.max(1,base.socias.length);
+  const costoMes=brutos+gastos, costoH=hFact? costoMes/hFact:0, precioH=costoH/(1-P.margen);
+  return {brutos,gastos,hDisp,hFact,costoMes,costoH,precioH,equilibrio:precioH? costoMes/precioH:0};
+}
+
+// ---------- cálculo ----------
+const MONTAJE_HON=["h_visita","h_prod","h_sup"];
+function inScope(qq,c){ if(!SCOPES[qq.alcance].cats.includes(c.cat)) return false; if(qq.alcance==="montaje" && c.cat==="hon") return MONTAJE_HON.includes(c.id); return true; }
+function cxFactor(qq){ const P=base.params; return ({simple:P.cxSimple,normal:1,complejo:P.cxComplejo}[qq.cx]||1)*(1+(qq.learn||0)); }
+function unitPrice(qq,id){ const ln=qq.lines[id], c=cat(id); if(ln && ln.p!=null) return ln.p; return c.cat==="hon"? base.roles[c.role].uf : c.p; }
+function extrasFor(qq){ return EXTRAS.filter(e=>e.scopes==="all"||e.scopes.includes(qq.alcance)); }
+function calc(qq){
+  const P=base.params, uf=P.uf, hm=hourModel(), cx=cxFactor(qq);
+  const s={lines:[], horas:0, honV:0, matSub:0, lab:0, log:0, ext:0, adicV:0, adicCosto:0, adicH:0, extraLines:[]};
+  for(const c of base.catalog){
+    const ln=qq.lines[c.id]; if(!ln||!ln.on||!inScope(qq,c)) continue;
+    const p=unitPrice(qq,c.id);
+    if(c.cat==="hon"){ const h=ln.q*(c.hpu||1)*cx; const v=h*p*uf; s.horas+=h; s.honV+=v; s.lines.push({c,ln,p,h,v}); }
+    else { let t=ln.q*p; if(c.cat==="lab"&&c.night&&qq.noct) t*=1+P.noct; s[c.cat==="mat"?"matSub":c.cat]+=t; s.lines.push({c,ln,p,v:t}); }
+  }
+  for(const e of extrasFor(qq)){
+    const x=qq.extras[e.k]; if(!x||x.ans!==true) continue;
+    const val = x.v ?? e.def;
+    if(e.kind==="h"){ const h=val*(e.per||1); const v=h*base.roles[e.role].uf*uf; s.horas+=h; s.honV+=v; s.extraLines.push({e,val,h,v}); }
+    else if(e.kind==="clp"){ s.ext+=val; s.extraLines.push({e,val,v:val}); }
+  }
+  for(const a of qq.adic||[]){ const v=(a.h||0)*base.roles.dis.uf*uf + (a.costo||0)*(1+P.fee+P.cont); s.adicV+=v; s.adicCosto+=(a.costo||0); s.adicH+=(a.h||0); s.horas+=(a.h||0); }
+  s.merma=s.matSub*P.merma; s.mat=s.matSub+s.merma;
+  const res=qq.extras.reserva; s.reserva=(res&&res.ans===true&&extrasFor(qq).some(e=>e.k==="reserva"))? (s.mat+s.lab+s.log)*((res.v??5)/100) : 0;
+  s.dir=s.mat+s.lab+s.log+s.ext+s.reserva;
+  s.fee=s.dir*P.fee; s.cont=s.dir*P.cont;
+  s.rec0=s.honV+s.dir+s.fee+s.cont+s.adicV;
+  s.urg=qq.urg? s.rec0*P.urg:0;
+  s.fin=(qq.plazo>0)? (s.rec0+s.urg)*0.5*P.interes*(qq.plazo/30):0;
+  const tj=qq.extras.tarjeta; s.tPct=(tj&&tj.ans===true)? (tj.v??3)/100 : 0;
+  const gross = 1/(1-s.tPct);
+  s.recRaw=(s.rec0+s.urg+s.fin)*gross;
+  s.minProyecto=P.minUF*uf;
+  s.minApplied = s.recRaw>0 && s.recRaw<s.minProyecto;
+  s.rec = s.recRaw>0? Math.max(s.recRaw, s.minProyecto) : 0;
+  s.costoHoras=s.horas*hm.costoH;
+  s.minimo = s.rec>0? (s.costoHoras + s.dir*(1+P.cont) + s.adicCosto)*gross : 0;
+  s.ideal = s.rec*(1+P.premium);
+  s.basePrice = qq.tier==="min"? s.minimo : qq.tier==="ideal"? s.ideal : s.rec;
+  s.descAmt = s.basePrice*(qq.desc||0);
+  s.neto = s.basePrice - s.descAmt;
+  s.light = s.neto<=0? "gris" : s.neto < s.minimo-1 ? "rojo" : s.neto < s.rec-1 ? "amarillo" : "verde";
+  s.comision = s.neto*s.tPct;
+  s.terceros = s.dir + s.adicCosto + s.comision;
+  s.ganancia = s.neto - s.terceros - s.costoHoras;
+  if(qq.doc==="boleta"){ s.iva=0; s.bruto=s.neto/(1-P.ret); s.retencion=s.bruto-s.neto; s.total=s.bruto; }
+  else { s.iva=s.neto*P.iva; s.total=s.neto+s.iva; }
+  // caja
+  s.antNeed = s.neto>0? (s.dir+s.adicCosto)/s.neto : 0;
+  const autoAnt = Math.min(1, Math.max(P.antMin, Math.ceil(s.antNeed*20-1e-9)/20));
+  s.ant = qq.ant!=null? qq.ant : autoAnt; s.antAuto=autoAnt;
+  s.cajaOK = s.ant + 1e-9 >= s.antNeed;
+  if(qq.alcance==="diseno") s.pagos=[[s.ant,"Al aprobar la cotización"],[1-s.ant,"Al entregar el diseño"]];
+  else if(s.ant>=0.9) s.pagos=[[s.ant,"Al aprobar la cotización"],[1-s.ant,"Contra entrega"]];
+  else s.pagos=[[s.ant,"Al aprobar la cotización"],[Math.max(0,1-s.ant-0.1),"Antes del montaje"],[0.1,"Contra entrega"]];
+  s.pagos=s.pagos.filter(p=>p[0]>0.0001);
+  s.perM2 = qq.m2>0? s.neto/qq.m2 : 0;
+  s.honPct = s.neto? (s.honV/(s.rec0||1)) : 0;
+  return s;
+}
+function snapOf(qq){ const s=calc(qq); return {horas:+s.horas.toFixed(2), neto:Math.round(s.neto), total:Math.round(s.total), ganancia:Math.round(s.ganancia), terceros:Math.round(s.terceros), minimo:Math.round(s.minimo), rec:Math.round(s.rec), light:s.light}; }
+
+// ---------- lector ----------
+function detect(text){
+  const t=norm(text), d={type:null,scope:null,m2:null,mods:[],noct:false,urg:false};
+  for(const [k,re] of TYPE_RULES){ if(re.test(t)){ if(k.startsWith("SCOPE:")){ d.scope=k.slice(6); continue; } d.type=k; break; } }
+  let m=t.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|mt2|mts2|mts ?2|metros cuadrados|metros2)/);
+  if(m) d.m2=parseNum(m[1]);
+  else { m=t.match(/(\d+(?:[.,]\d+)?)\s*(?:x|por)\s*(\d+(?:[.,]\d+)?)\s*(?:m\b|mts|metros)/); if(m) d.m2=+(parseNum(m[1])*parseNum(m[2])).toFixed(2); }
+  d.noct=/noche|nocturn|fin de semana|domingo|sabado|madrugada/.test(t);
+  d.urg=/urgent|urgencia|para manana|lo antes posible|express|esta misma semana/.test(t);
+  if(/sin montaje|solo materiales|con materiales|ellos (lo )?(fabrican|arman|montan)/.test(t)) d.scope = /con materiales|solo materiales/.test(t)? "disemat" : (d.scope||"diseno");
+  for(const mod of MODS) if(mod.re.test(t)) d.mods.push(mod.k);
+  return d;
+}
+function loadTemplate(type,m2,keepOn){
+  const T=TEMPLATES[type]; if(!T) return;
+  q.tipo=type; if(!m2) m2=T.m2; q.m2=m2;
+  if(!keepOn){ q.lines={}; q.noct=T.noct; q.alcance=T.scope; }
+  for(const [id,f] of Object.entries(T.it)){
+    const prev=q.lines[id];
+    q.lines[id]={on: keepOn? (prev? prev.on:true) : true, q:Math.max(0,f(m2||1)), p: prev? prev.p:null};
+  }
+}
+function defaultQty(id){
+  const c=cat(id), m=q.m2||10;
+  const d={m_impresion:M(2,R(m*0.67)), h_grafica:M(2,C(m/9)), h_visita:1, g_viatico:4, g_flete:2, h_sup:M(4,R(4+0.3*m)), h_render:M(2,C(m/6)), h_planos:M(2,C(m/5))}[id];
+  if(d!=null) return d;
+  return c.cat==="hon" ? (c.hpu>1? 1 : 4) : 1;
+}
+function applyDetection(force){
+  const d=detect(q.texto), sig=JSON.stringify(d);
+  if(sig===lastSig && !force) return d;
+  const prev=lastSig? JSON.parse(lastSig):{}; lastSig=sig;
+  if(d.type && (d.type!==q.tipo || d.m2!==prev.m2)) loadTemplate(d.type, d.m2 ?? (d.type===q.tipo? q.m2:null), false);
+  else if(d.m2!=null && d.m2!==prev.m2 && q.tipo) loadTemplate(q.tipo, d.m2, true);
+  if(d.scope) q.alcance=d.scope;
+  if(d.noct) q.noct=true;
+  if(d.urg) q.urg=true;
+  for(const k of d.mods){ for(const id of MODS.find(x=>x.k===k).on){ const ln=q.lines[id]; if(!ln) q.lines[id]={on:true,q:defaultQty(id),p:null}; else ln.on=true; } }
+  if(d.mods.includes("desmontaje") && q.lines.g_flete && q.lines.g_flete.q<2) q.lines.g_flete.q=2;
+  return d;
+}
+
+// ---------- aprendizaje ----------
+function learning(tipo){
+  const cl=Object.values(quotes).filter(x=>x.status==="cerrada"&&x.cierre&&x.tipo===tipo&&x.snap&&x.snap.horas>0&&x.cierre.horas>0);
+  if(!cl.length) return null;
+  const r=cl.reduce((a,x)=>a+x.cierre.horas/x.snap.horas,0)/cl.length;
+  return {n:cl.length, factor:r-1};
+}
+
+// ---------- documento ----------
+function quoteNum(qq){ return qq.num || "en borrador"; }
+function docLines(qq,s){
+  const P=base.params, k0 = s.rec0>0? (s.basePrice/s.rec0) : 1, lf=1+P.fee+P.cont;
+  const sec=[];
+  const hon=[];
+  for(const l of s.lines.filter(l=>l.c.cat==="hon")){
+    const u=l.c.u; const qty = u==="h"? "" : `${numIn(l.ln.q,1)} ${u==="vista"?(l.ln.q===1?"vista":"vistas"):u==="lámina"?(l.ln.q===1?"lámina":"láminas"):u==="pieza"?(l.ln.q===1?"pieza":"piezas"):u==="jornada"?(l.ln.q===1?"jornada":"jornadas"):u==="visita"?(l.ln.q===1?"visita":"visitas"):u}`;
+    hon.push({n:l.c.n+(qty?` · ${qty}`:""), d:l.c.d, v:l.v*k0});
+  }
+  for(const x of s.extraLines.filter(x=>x.e.kind==="h")) hon.push({n:x.e.k==="reuniones"?`Reuniones de presentación y coordinación · ${numIn(x.val)}`:x.e.k==="cambios"?"Horas adicionales de ajustes al diseño":"Gestión de compras y proveedores", d:"", v:x.v*k0});
+  if(hon.length) sec.push({n:"Diseño y dirección creativa", col:"#d4167e", items:hon});
+  if(SCOPES[qq.alcance].cats.includes("mat") && s.mat>0){
+    const ml=s.lines.filter(l=>l.c.cat==="mat");
+    if(qq.showMat) sec.push({n:"Materiales", col:"#1c9a55", items: ml.map(l=>({n:`${l.c.n} · ${numIn(l.ln.q,1)} ${l.c.u}`, d:"", v:l.v*(1+P.merma)*lf*k0}))});
+    else sec.push({n:"Materiales", col:"#1c9a55", items:[{n:"Materiales y terminaciones según diseño", d: ml.slice(0,4).map(l=>l.c.n.replace(/ \d+ mm$/,"")).filter((v,i,a)=>a.indexOf(v)===i).join(", ")+(ml.length>4?" y otros":""), v:s.mat*lf*k0}]});
+  }
+  if(s.lab>0){
+    const jor=s.lines.filter(l=>l.c.cat==="lab").reduce((a,l)=>a+l.ln.q,0);
+    sec.push({n: qq.alcance==="montaje"?"Montaje":"Fabricación y montaje", col:"#0aa9bb", items:[{n: qq.alcance==="montaje"?"Equipo de montaje y desmontaje":"Fabricación en taller, montaje y desmontaje", d:`${numIn(jor,1)} jornadas de equipo${qq.noct?" · incluye montaje nocturno o en fin de semana":""}`, v:s.lab*lf*k0}]});
+  }
+  const logV=(s.log+s.ext+s.reserva)*lf*k0;
+  if(logV>0.5) sec.push({n:"Logística y traslados", col:"#8a949e", items:[{n:"Fletes, traslados, embalaje y gastos de terreno", d:s.lines.filter(l=>l.c.cat==="log").map(l=>l.c.n).join(", "), v:logV}]});
+  if((qq.adic||[]).length) sec.push({n:"Adicionales solicitados", col:"#b45309", items:qq.adic.map(a=>({n:a.n||"Adicional", d:"", v:((a.h||0)*base.roles.dis.uf*P.uf+(a.costo||0)*lf)*k0}))});
+  // cuadrar redondeo
+  const all=sec.flatMap(x=>x.items); const sum=all.reduce((a,x)=>a+Math.round(x.v),0); const diff=Math.round(s.basePrice)-sum;
+  if(all.length && diff) all[all.length-1].v += diff;
+  return sec;
+}
+function includesFor(qq){
+  const inc=[], exc=[], P=base.params;
+  inc.push(`${P.rondas} rondas de cambios en el diseño`);
+  if(qq.alcance==="diseno"){ inc.push("Archivos finales en PDF y formato editable"); exc.push("Fabricación, materiales y montaje (se pueden cotizar aparte)"); exc.push("Compras y coordinación de proveedores"); }
+  if(qq.alcance==="disemat"){ inc.push("Compra y despacho de materiales"); exc.push("Mano de obra de fabricación y montaje"); }
+  if(qq.alcance==="llave"){ inc.push("Fabricación, transporte, montaje y desmontaje"); inc.push("Coordinación de todos los proveedores"); }
+  if(qq.alcance==="montaje"){ inc.push("Equipo de montaje y desmontaje"); exc.push("Diseño y fabricación de las piezas"); }
+  if(qq.alcance!=="diseno"){ exc.push("Arriendo del espacio, permisos, electricidad y seguros del recinto, salvo que se indiquen"); }
+  exc.push("Cambios de alcance después de aprobado el diseño (se cotizan como adicional)");
+  if(!qq.lines.g_viatico?.on) exc.push("Traslados fuera de Santiago");
+  return {inc,exc};
+}
+function paperHTML(qq,s){
+  const E=base.estudio, P=base.params;
+  const fecha=qq.updatedAt||Date.now();
+  const hasta=new Date(fecha+P.validez*864e5);
+  const logo = base.logo ? `<img src="${base.logo}" alt="${esc(E.nombre)}">` : `<div class="wm"><span style="color:#d4167e">po</span><span style="color:#1c9a55">pu</span><span style="color:#0aa9bb">rrí</span><small>ESTUDIO</small></div>`;
+  const sec=docLines(qq,s);
+  const scopeName={diseno:"Diseño",disemat:"Diseño y suministro de materiales",llave:"Diseño, producción y montaje",montaje:"Montaje"}[qq.alcance];
+  const tipoN = qq.tipo? TEMPLATES[qq.tipo].n : "";
+  let rows="";
+  for(const x of sec){
+    rows+=`<tr class="sec"><td colspan="2"><i style="background:${x.col}"></i>${esc(x.n)}</td></tr>`;
+    for(const it of x.items) rows+=`<tr><td>${esc(it.n)}${it.d?`<span class="d">${esc(it.d)}</span>`:""}</td><td class="r">${fmtCLP(it.v)}</td></tr>`;
+  }
+  if(!sec.length) rows=`<tr><td colspan="2" style="color:#888;padding:20px 0">Marca partidas para armar la cotización.</td></tr>`;
+  let tots="";
+  if(qq.desc>0) tots+=`<tr><td>Descuento comercial (${pct(qq.desc,1)})</td><td class="r">${fmtCLP(-s.descAmt)}</td></tr>`;
+  if(qq.doc==="boleta"){
+    tots+=`<tr class="tot"><td>Total honorarios (boleta)</td><td class="r">${fmtCLP(s.bruto)}</td></tr><tr><td>Retención 15,25% (la paga el cliente al SII)</td><td class="r">${fmtCLP(-s.retencion)}</td></tr><tr class="grand"><td>Líquido a pagar al estudio</td><td class="r">${fmtCLP(s.neto)}</td></tr>`;
+  } else {
+    tots+=`<tr class="tot"><td>Total neto <span class="d">${fmtUFn(toUF(s.neto))} UF</span></td><td class="r">${fmtCLP(s.neto)}</td></tr><tr><td>IVA ${pct(P.iva)}</td><td class="r">${fmtCLP(s.iva)}</td></tr><tr class="grand"><td>Total</td><td class="r">${fmtCLP(s.total)}</td></tr>`;
+  }
+  const {inc,exc}=includesFor(qq);
+  const datos=[E.rut&&`RUT ${esc(E.rut)}`, E.correo&&esc(E.correo), E.telefono&&esc(E.telefono), E.instagram&&esc(E.instagram), E.ciudad&&esc(E.ciudad)].filter(Boolean).join(" · ");
+  const hist = (qq.hist||[]).length ? `<div class="ver">Versión ${qq.ver}. Reemplaza a la versión ${qq.hist[qq.hist.length-1].v} del ${fdate(qq.hist[qq.hist.length-1].t)} (${fmtCLP(qq.hist[qq.hist.length-1].neto)} neto).</div>` : "";
+  return `<div class="paper"><div class="pb"></div>
+  <div class="ph"><div class="pl">${logo}<div class="studio">${esc(E.lema)}${datos?`<br>${datos}`:""}</div></div>
+  <div class="meta"><b>Cotización ${esc(quoteNum(qq))}${qq.ver>1?` · v${qq.ver}`:""}</b>${fdate(fecha)}<br>Válida hasta el ${fdate(hasta)}<br>UF del día ${fmtCLP(P.uf)}</div></div>
+  <h1>${esc(qq.nombre || (tipoN? tipoN+(qq.m2?` ${numIn(qq.m2,2)} m²`:""):"Proyecto"))}</h1>
+  <p class="for">${qq.cliente?`Para ${esc(qq.cliente)} · `:""}${esc(scopeName)}${tipoN?` · ${esc(tipoN)}`:""}${qq.m2?` · ${numIn(qq.m2,2)} m²`:""}</p>
+  ${hist}
+  <table><thead><tr><th>Detalle</th><th class="r">Valor neto</th></tr></thead><tbody>${rows}</tbody><tfoot>${tots}</tfoot></table>
+  <div class="cols">
+   <div><h3>Forma de pago</h3><ul>${s.pagos.map(p=>`<li>${pct(p[0])} ${esc(p[1].toLowerCase())}: ${fmtCLP(s.total*p[0])}</li>`).join("")}</ul>${qq.plazo>0?`<p style="font-size:11.5px;color:#666;margin:6px 0 0">Saldo a ${qq.plazo} días desde la factura.</p>`:""}</div>
+   <div><h3>Incluye</h3><ul>${inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>
+  </div>
+  <div class="cols" style="margin-top:10px">
+   <div><h3>No incluye</h3><ul>${exc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>
+   <div><h3>Condiciones</h3><ul><li>Validez de ${P.validez} días; los materiales cambian de precio.</li><li>El trabajo parte con el pago del anticipo.</li><li>El diseño es propiedad intelectual de ${esc(E.nombre)} hasta el pago total.</li>${qq.urg?"<li>Incluye recargo por plazo urgente.</li>":""}</ul></div>
+  </div>
+  <div class="foot"><span>${esc(E.nombre)}</span><span>Gracias por confiar en nosotras.</span></div></div>`;
+}
+
+// ---------- render: cotizar ----------
+function renderLogo(){
+  document.getElementById("logoSlot").innerHTML = base.logo ? `<img src="${esc(base.logo)}" alt="${esc(base.estudio.nombre)}">`
+   : `<div class="wordmark" aria-label="Popurrí Estudio"><span class="p1">po</span><span class="p2">pu</span><span class="p3">rrí</span><small>estudio · cotizador</small></div>`;
+}
+function renderDetected(d){
+  const el=document.getElementById("detected");
+  if(!q.texto.trim()){ el.innerHTML=`<span class="lbl">Prueba: “sólo diseño de un pop-up de 3x4 m con renders” o “stand de 18 m² con gráfica y desmontaje, urgente”</span>`; return; }
+  const ch=[];
+  ch.push(d.type? `<span class="chip f">${esc(TEMPLATES[d.type].n)}</span>` : `<span class="chip w">No reconocí el tipo: elígelo abajo</span>`);
+  if(d.scope) ch.push(`<span class="chip">${esc(SCOPES[d.scope].n)}</span>`);
+  if(d.m2) ch.push(`<span class="chip c">${numIn(d.m2,2)} m²</span>`);
+  if(d.noct) ch.push(`<span class="chip v">Montaje nocturno</span>`);
+  if(d.urg) ch.push(`<span class="chip w">Urgente</span>`);
+  for(const k of d.mods) ch.push(`<span class="chip">${esc(MODS.find(m=>m.k===k).label)}</span>`);
+  el.innerHTML=`<span class="lbl">Detecté:</span>`+ch.join("");
+}
+function renderTypes(){
+  document.getElementById("types").innerHTML=Object.entries(TEMPLATES).map(([k,T])=>`<button type="button" class="type" data-type="${k}" aria-pressed="${q.tipo===k}"><b>${esc(T.n)}</b><span>${esc(T.d)}</span></button>`).join("");
+}
+function renderOpts(){
+  const P=base.params;
+  document.getElementById("optrow").innerHTML=`
+   <span class="lab">Complejidad ${tip("cx")}</span>
+   <div class="seg" role="group" aria-label="Complejidad">${[["simple","Simple"],["normal","Normal"],["complejo","Complejo"]].map(([k,n])=>`<button type="button" data-cx="${k}" aria-pressed="${q.cx===k}">${n}</button>`).join("")}</div>
+   <label class="tog" for="tNoct"><input type="checkbox" id="tNoct" ${q.noct?"checked":""}>Montaje de noche / fin de semana +${pct(P.noct)} ${tip("noct")}</label>
+   <label class="tog" for="tUrg"><input type="checkbox" id="tUrg" ${q.urg?"checked":""}>Urgente +${pct(P.urg)} ${tip("urg")}</label>`;
+  const L = q.tipo? learning(q.tipo) : null;
+  document.getElementById("learnBox").innerHTML = (L && Math.abs(L.factor)>0.05) ? `<div class="learn"><span>En sus ${L.n} ${L.n===1?"proyecto cerrado":"proyectos cerrados"} de ${esc(TEMPLATES[q.tipo].n.toLowerCase())} usaron <b>${pct(Math.abs(L.factor))} ${L.factor>0?"más":"menos"} horas</b> de lo cotizado.</span>${q.learn? `<button class="btn sm" type="button" id="learnOff">Quitar ajuste</button>` : `<button class="btn sm dark" type="button" id="learnOn">Ajustar horas ${L.factor>0?"+":"−"}${pct(Math.abs(L.factor))}</button>`}</div>` : "";
+}
+function renderScopes(){
+  document.getElementById("scopes").innerHTML=Object.entries(SCOPES).map(([k,S])=>`<button type="button" class="scope" data-scope="${k}" aria-pressed="${q.alcance===k}"><span class="dots">${S.dots.map(c=>`<i style="background:${c}"></i>`).join("")}</span><b>${esc(S.n)}</b><span>${esc(S.d)}</span></button>`).join("");
+}
+function renderGroups(){
+  const cats=SCOPES[q.alcance].cats;
+  document.getElementById("groups").innerHTML = cats.map(k=>{
+    const cdef=CATS[k]; let items=base.catalog.filter(c=>c.cat===k);
+    if(q.alcance==="montaje" && k==="hon") items=items.filter(c=>MONTAJE_HON.includes(c.id));
+    const n=items.filter(c=>q.lines[c.id]?.on).length;
+    return `<div class="group ${cdef.cls}"><header><span>${esc(cdef.n)}</span><small>${n} de ${items.length}</small></header><ul>`+
+     items.map(c=>{const ln=q.lines[c.id], on=!!ln?.on; return `<li class="${on?"on":""}"><label for="ck_${c.id}"><input type="checkbox" id="ck_${c.id}" data-ck="${c.id}" ${on?"checked":""}><span>${esc(c.n)}</span><span class="q">${on?`${numIn(ln.q,1)} ${esc(c.u)}`:""}</span></label></li>`;}).join("")+`</ul></div>`;
+  }).join("");
+  const hidden=Object.entries(CATS).filter(([k])=>!cats.includes(k)).map(([,c])=>c.short.toLowerCase());
+  document.getElementById("offscope").textContent = hidden.length? `Con “${SCOPES[q.alcance].n}” no se cobran ${hidden.join(" ni ")}. Cambia el alcance si el cliente los necesita.` : "";
+}
+function renderChecklist(){
+  const list=extrasFor(q); const answered=list.filter(e=>q.extras[e.k]&&q.extras[e.k].ans!=null).length;
+  document.getElementById("ckProgress").innerHTML=`<div class="note">${answered} de ${list.length} revisados${answered<list.length?" · respondan todos antes de enviar":" ✓"}</div><div class="progress"><i style="width:${list.length?answered/list.length*100:0}%"></i></div>`;
+  document.getElementById("checklist").innerHTML=list.map(e=>{
+    const x=q.extras[e.k]||{}, val=x.v ?? e.def, st=x.ans===true?"yes":x.ans===false?"no":"pend";
+    const inp = e.kind==="clp"? `<input type="text" inputmode="decimal" data-exv="${e.k}" value="${numIn(val)}" aria-label="Monto ${esc(e.n)}"> $`
+      : `<input type="text" inputmode="decimal" data-exv="${e.k}" value="${numIn(val,1)}" aria-label="${esc(e.n)}" style="width:60px"> ${esc(e.unit)}`;
+    return `<div class="ck ${st}"><div><b>${esc(e.n)}</b><p>${esc(e.p)}</p></div><div class="ctl">${x.ans===true?inp:""}<span class="yn"><button type="button" class="si" data-ex="${e.k}" data-ans="1" aria-pressed="${x.ans===true}">Sí</button><button type="button" class="no" data-ex="${e.k}" data-ans="0" aria-pressed="${x.ans===false}">No</button></span></div></div>`;
+  }).join("");
+}
+function renderDetail(s){
+  const P=base.params; let rows="";
+  const groups={hon:[],mat:[],lab:[],log:[]}; for(const l of s.lines) groups[l.c.cat].push(l);
+  for(const [k,list] of Object.entries(groups)){
+    if(!list.length) continue; const cdef=CATS[k];
+    rows+=`<tr class="cat ${cdef.cls}"><td colspan="5"><span></span>${esc(cdef.n)}</td></tr><tr><th>Partida</th><th>Cantidad</th><th>${k==="hon"?"Tarifa UF/h":"Valor unitario $"}</th><th>Subtotal</th><th></th></tr>`;
+    let sub=0;
+    for(const l of list){
+      const c=l.c, adj=l.ln.p!=null; sub+=l.v;
+      const old=c.cat!=="hon" && daysOld(c.f)>60;
+      const extra = c.cat==="hon" ? `<span class="alt">${esc(base.roles[c.role].n)} · ${numIn(l.h,1)} h${c.hpu>1?` (${c.hpu} h por ${esc(c.u)})`:""}${cxFactor(q)!==1?` · ×${numIn(cxFactor(q),2)}`:""}</span>`
+        : (c.night && q.noct ? `<span class="alt">con recargo nocturno +${pct(P.noct)}</span>` : "");
+      rows+=`<tr><td>${esc(c.n)}${c.est?'<span class="est" title="Valor estimado: validar con proveedor">EST.</span>':""}${old?'<span class="est" title="Precio con más de 60 días">REVISAR</span>':""}${extra}</td>
+       <td><input class="q" type="text" inputmode="decimal" data-q="${c.id}" value="${numIn(l.ln.q,2)}" aria-label="Cantidad ${esc(c.n)}"> <span class="unit">${esc(c.u)}</span></td>
+       <td><input type="text" inputmode="decimal" data-p="${c.id}" class="${adj?"adj":""}" value="${c.cat==="hon"?numIn(l.p,2):numIn(l.p)}" aria-label="Valor ${esc(c.n)}">${c.cat==="hon"?`<span class="alt">${fmtCLP(l.p*P.uf)}/h</span>`:`<span class="alt">${fmtUFn(toUF(l.p),3)} UF</span>`}</td>
+       <td>${money(l.v)}<span class="alt">${moneyAlt(l.v)}</span></td><td>${adj?`<button class="reset" type="button" data-reset="${c.id}" title="Volver al valor base">↺</button>`:""}</td></tr>`;
+    }
+    if(k==="hon") for(const x of s.extraLines.filter(x=>x.e.kind==="h")){ sub+=x.v; rows+=`<tr><td>${esc(x.e.n)}<span class="alt">del paso 4 · ${numIn(x.h,1)} h</span></td><td></td><td></td><td>${money(x.v)}</td><td></td></tr>`; }
+    if(k==="mat") rows+=`<tr><td colspan="3">Merma ${pct(P.merma)} ${tip("merma")}</td><td>${money(s.merma)}</td><td></td></tr>`;
+    rows+=`<tr class="subt"><td colspan="3">Total ${esc(cdef.short.toLowerCase())}</td><td>${money(k==="mat"?s.mat:sub)}</td><td></td></tr>`;
+  }
+  const ex=s.extraLines.filter(x=>x.e.kind==="clp");
+  if(ex.length||s.reserva){
+    rows+=`<tr class="cat g-log"><td colspan="5"><span></span>Gastos del paso 4</td></tr>`;
+    for(const x of ex) rows+=`<tr><td>${esc(x.e.n)}</td><td></td><td></td><td>${money(x.v)}</td><td></td></tr>`;
+    if(s.reserva) rows+=`<tr><td>Reserva para reparaciones</td><td></td><td></td><td>${money(s.reserva)}</td><td></td></tr>`;
+  }
+  if((q.adic||[]).length){
+    rows+=`<tr class="cat g-adi"><td colspan="5"><span></span>Adicionales</td></tr><tr><th>Descripción</th><th>Horas diseño</th><th>Costo terceros $</th><th>Precio</th><th></th></tr>`;
+    for(const a of q.adic){ const v=(a.h||0)*base.roles.dis.uf*P.uf+(a.costo||0)*(1+P.fee+P.cont);
+      rows+=`<tr><td><input class="nm" type="text" data-an="${a.id}" value="${esc(a.n)}" aria-label="Descripción adicional"></td><td><input class="q" type="text" inputmode="decimal" data-ah="${a.id}" value="${numIn(a.h,1)}" aria-label="Horas"></td><td><input type="text" inputmode="decimal" data-ac="${a.id}" value="${numIn(a.costo)}" aria-label="Costo"></td><td>${money(v)}</td><td><button class="reset" type="button" data-adel="${a.id}" title="Quitar">✕</button></td></tr>`; }
+  }
+  document.getElementById("dtable").innerHTML = rows || `<tr><td class="note" style="padding:12px 0">Todavía no hay partidas. Describe el encargo o elige un tipo de servicio.</td></tr>`;
+}
+function renderFinance(s){
+  const P=base.params, hm=hourModel();
+  if(s.rec<=0){ document.getElementById("finance").innerHTML=`<p class="note">Marca partidas para ver los precios.</p>`; return; }
+  const lightTxt={verde:["Están cobrando bien","Cubren todo y el estudio gana."],amarillo:["Cubren costos, pero ganan menos de lo que deberían","Están bajo el precio recomendado."],rojo:["Pierden plata con este precio","No alcanza ni para pagar sus horas y los costos."]}[s.light];
+  const parts=[["IVA (para el SII)",s.iva,"#c4ccd2"],["Proveedores y maestros",s.terceros,"#0aa9bb"],["Sus horas (sueldos y gastos fijos)",s.costoHoras,"#1c9a55"],["Ganancia del estudio",Math.max(0,s.ganancia),"#d4167e"]];
+  if(q.doc==="boleta") parts[0]=["Retención (la paga el cliente al SII)",s.retencion,"#c4ccd2"];
+  const totalBar=parts.reduce((a,p)=>a+p[1],0)||1;
+  const budget = q.presupuesto>0 ? budgetAdvice(s) : "";
+  const roleLow=Object.values(base.roles).some(r=>r.uf<toUF(hm.costoH));
+  let market="";
+  if(["popup","stand","vitrina","escenografia"].includes(q.tipo) && q.m2>0 && q.alcance==="llave"){
+    const pm=s.perM2, st=pm<P.mkLo?"warn":pm>P.mkHi?"info":"ok";
+    market=`<div class="box ${st}"><h3>Precio por m²: ${money(pm)}</h3><span>${pm<P.mkLo?"Bajo lo que cobra el mercado: pueden subir.":pm>P.mkHi?"Sobre el rango típico: justifíquenlo con diseño y terminaciones.":"Dentro del rango de mercado."} Stand a medida en Chile: ${fmtCLP(P.mkLo)}–${fmtCLP(P.mkHi)} por m².</span></div>`;
+  }
+  if((q.alcance==="diseno") && q.m2>0){
+    const u=toUF(s.neto)/q.m2;
+    market=`<div class="box ${u<0.5?"warn":"ok"}"><h3>Diseño a ${fmtUFn(u)} UF/m²</h3><span>Referencia: interiorismo 0,5–1,5 UF/m²; arquitectura 0,8–1,5 UF/m².</span></div>`;
+  }
+  document.getElementById("finance").innerHTML=`
+   <p class="sub" style="margin-top:0">Elige qué precio cobrar. El recomendado es el que deberían usar casi siempre.</p>
+   <div class="tiers">
+    <button type="button" class="tier min" data-tier="min" aria-pressed="${q.tier==="min"}"><small>Mínimo ${tip("minimo")}</small><b>${money(s.minimo)}</b><span>Sólo cubre costos. Ganancia $0.</span></button>
+    <button type="button" class="tier rec" data-tier="rec" aria-pressed="${q.tier==="rec"}"><small>Recomendado ${tip("rec")}</small><b>${money(s.rec)}</b><span>${s.minApplied?`Subido al cobro mínimo de ${numIn(P.minUF)} UF.`:"Cubre todo y deja margen."}</span></button>
+    <button type="button" class="tier ideal" data-tier="ideal" aria-pressed="${q.tier==="ideal"}"><small>Ideal ${tip("ideal")}</small><b>${money(s.ideal)}</b><span>+${pct(P.premium)} para clientes grandes o complejos.</span></button>
+   </div>
+   <div class="light ${s.light}"><i class="dot"></i><div><b>${lightTxt[0]}</b>${lightTxt[1]} Precio neto final: <b style="display:inline">${money(s.neto)}</b>${q.desc>0?` (con ${pct(q.desc,1)} de descuento)`:""}.</div></div>
+   <div class="flow"><h3 style="font-size:16px;display:flex;gap:8px;align-items:center">De ${money(s.total)} que paga el cliente, esto le queda a quién ${tip("queda")}</h3>
+    <div class="flowbar" style="margin-top:10px">${parts.map(p=>`<i style="width:${p[1]/totalBar*100}%;background:${p[2]}" title="${esc(p[0])}"></i>`).join("")}</div>
+    <div class="flowleg">${parts.map((p,i)=>`<div><b class="sw" style="background:${p[2]}"></b><span>${esc(p[0])}</span><span class="${i===3?"big":""}">${money(i===3?s.ganancia:p[1])}</span></div>`).join("")}</div>
+    ${s.ganancia<0?`<p class="note" style="color:var(--rojo);font-weight:700">Con este precio el estudio pierde ${money(-s.ganancia)}.</p>`:""}
+   </div>
+   <div class="kgrid">
+    <div class="box ${s.cajaOK?"ok":"bad"}"><h3>Anticipo ${tip("anticipo")}</h3>
+      <span>Para comprar todo y pagar a los maestros necesitan <b>${pct(s.antNeed)}</b> del neto antes de partir.</span>
+      <div class="inline"><input type="text" inputmode="decimal" id="antIn" value="${numIn(s.ant*100)}" aria-label="Anticipo %"><span>%</span>${q.ant!=null?`<button class="btn sm" type="button" id="antAuto">Automático (${pct(s.antAuto)})</button>`:""}</div>
+      <span>${s.cajaOK?"✓ No ponen plata de su bolsillo.":`Con ${pct(s.ant)} tendrían que poner ${money((s.antNeed-s.ant)*s.neto)} propios. Suban el anticipo.`}</span></div>
+    <div class="box info"><h3>Descuento</h3><div class="inline"><input type="text" inputmode="decimal" id="descIn" value="${numIn((q.desc||0)*100,1)}" aria-label="Descuento %"><span>%</span></div>
+      <span>${q.desc>0?`Les cuesta ${money(s.descAmt)} de su ganancia.`:"Ofrezcan descuento sólo si el semáforo sigue en verde."}</span></div>
+    <div class="box info"><h3>Cómo emiten ${tip("boleta")}</h3><select id="docSel" aria-label="Documento tributario"><option value="factura" ${q.doc==="factura"?"selected":""}>Factura (+IVA ${pct(P.iva)})</option><option value="boleta" ${q.doc==="boleta"?"selected":""}>Boleta de honorarios</option></select>
+      <span>${q.doc==="boleta"?`La boleta se emite por ${money(s.bruto)}; el cliente retiene ${money(s.retencion)} y ustedes reciben ${money(s.neto)}.${q.alcance!=="diseno"?" Con materiales o montaje lo normal es factura: confirmen con el contador.":""}`:`El cliente paga ${money(s.total)}; ${money(s.iva)} es IVA y se paga al SII.`}</span></div>
+    <div class="box info"><h3>Plazo de pago del cliente ${tip("plazo")}</h3><select id="plazoSel" aria-label="Plazo de pago">${[0,30,60,90].map(d=>`<option value="${d}" ${q.plazo===d?"selected":""}>${d?`${d} días`:"Al contado"}</option>`).join("")}</select>
+      <span>${q.plazo>0?`Se suman ${money(s.fin)} por esperar el pago.`:"Las empresas grandes suelen pagar a 30–60 días."}</span></div>
+    <div class="box ${budget?"warn":"info"}"><h3>¿El cliente tiene un presupuesto?</h3><div class="inline"><input type="text" inputmode="decimal" id="budIn" value="${q.presupuesto?numIn(q.presupuesto):""}" placeholder="$ neto" aria-label="Presupuesto del cliente"></div>${budget||'<span>Escríbelo y les digo si conviene y qué ajustar.</span>'}</div>
+    ${market}
+    <div class="box ${roleLow?"bad":"info"}"><h3>Su hora cuesta ${fmtUFn(toUF(hm.costoH))} UF ${tip("costoH")}</h3><span>${roleLow?"Alguna tarifa por rol está bajo ese costo: súbanla en Valores base.":`Con margen: ${fmtUFn(toUF(hm.precioH))} UF/h. Este proyecto usa ${numIn(s.horas,1)} h de ustedes.`}</span></div>
+   </div>`;
+}
+function budgetAdvice(s){
+  const b=q.presupuesto;
+  if(b>=s.rec) return `<span>✓ Alcanza para el precio recomendado (sobran ${money(b-s.rec)}).</span>`;
+  let txt = b>=s.minimo ? `<span>Alcanza, pero ganan ${money(s.rec-b)} menos que lo recomendado.</span>` : `<span style="color:var(--rojo);font-weight:700">No conviene: con ${money(b)} pierden ${money(s.minimo-b)}.</span>`;
+  const opts=[];
+  if(q.tipo && q.m2>0 && TEMPLATES[q.tipo].m2>0){
+    let lo=1, hi=q.m2, best=0;
+    for(let i=0;i<18;i++){ const mid=(lo+hi)/2; const t=clone(q); const keep=q; q=t; loadTemplate(t.tipo, mid, true); const r=calc(t).rec; q=keep; if(r<=b){best=mid; lo=mid;} else hi=mid; }
+    if(best>=1) opts.push(`reducir a unos ${numIn(Math.floor(best))} m²`);
+  }
+  if(q.alcance!=="diseno"){ const t=clone(q); t.alcance="diseno"; const r=calc(t).rec; if(r<=b) opts.push(`ofrecer sólo el diseño (${money(r)})`); }
+  if(q.cx==="complejo"){ opts.push("simplificar el diseño"); }
+  if(opts.length) txt+=`<span>Opciones: ${opts.join(", ")}.</span>`;
+  return txt;
+}
+function renderBottom(s){
+  const sem=document.getElementById("bbSem");
+  const t={verde:"Cobrando bien",amarillo:"Ganan menos",rojo:"Pierden plata",gris:"Sin partidas"}[s.light];
+  sem.className="sem "+s.light; sem.innerHTML=`<i></i><span>${t}</span>`;
+  document.getElementById("bbNeto").textContent=money(s.neto);
+  document.getElementById("bbTotal").textContent=money(s.total);
+  const g=document.getElementById("bbGan"); g.textContent=money(s.ganancia); g.style.color=s.ganancia<0?"var(--rojo)":"";
+  document.getElementById("bbNum").textContent = q.num? `${q.num}${q.ver>1?" · v"+q.ver:""}` : "Cotización nueva";
+}
+function renderEditor(det){
+  const s=calc(q);
+  renderTypes(); renderOpts(); renderScopes(); renderGroups(); renderChecklist(); renderDetail(s); renderFinance(s); renderBottom(s);
+  document.getElementById("paper").innerHTML=paperHTML(q,s);
+  document.getElementById("qStatus").value=q.status;
+  document.getElementById("showMat").checked=!!q.showMat;
+  document.getElementById("showMat").closest("label").hidden = !SCOPES[q.alcance].cats.includes("mat");
+  renderDetected(det||detect(q.texto));
+}
+function fillInputs(){
+  document.getElementById("brief").value=q.texto||"";
+  document.getElementById("qName").value=q.nombre||"";
+  document.getElementById("qClient").value=q.cliente||"";
+  document.getElementById("qM2").value=q.m2? numIn(q.m2,2):"";
+  document.getElementById("qName").placeholder = q.tipo? TEMPLATES[q.tipo].n+(q.m2?` ${numIn(q.m2,2)} m²`:"") : "Nombre del proyecto";
+}
+
+// ---------- render: lista ----------
+const STATUS={borrador:"Borrador",enviada:"Enviada",aceptada:"Aceptada",rechazada:"Rechazada",cerrada:"Cerrada"};
+function sortedQuotes(){ return Object.values(quotes).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)); }
+function renderList(){
+  const n=Object.keys(quotes).length; const nc=document.getElementById("navCount"); nc.hidden=!n; nc.textContent=n;
+  document.getElementById("stFilter").innerHTML=[["todas","Todas"],...Object.entries(STATUS)].map(([k,v])=>`<button type="button" data-st="${k}" aria-pressed="${stFilter===k}">${v}</button>`).join("");
+  document.getElementById("localBanner").innerHTML = online? "" : `<div class="banner">Las cotizaciones se están guardando sólo en este navegador. Cuando la app se conecte, se guardan para las dos.</div>`;
+  const term=norm(document.getElementById("qSearch").value);
+  const list=sortedQuotes().filter(x=>(stFilter==="todas"||x.status===stFilter) && (!term || norm([x.num,x.nombre,x.cliente].join(" ")).includes(term)));
+  const el=document.getElementById("qlist");
+  if(!list.length){ el.innerHTML=`<div class="empty">${n?"No hay cotizaciones con ese filtro.":"Aún no hay cotizaciones. Se guardan solas apenas marcas la primera partida."}</div>`; return; }
+  el.innerHTML=list.map(x=>{
+    const sn=x.snap||{}; const tipoN=x.tipo? TEMPLATES[x.tipo].n : "Sin tipo";
+    const semC={verde:"var(--verde)",amarillo:"var(--amarillo)",rojo:"var(--rojo)"}[sn.light]||"var(--muted)";
+    let closer="";
+    if(closingId===x.id){
+      const ci=x.cierre||{};
+      closer=`<div class="closer"><b>Cierre del proyecto: anoten lo que de verdad pasó</b>
+       <div class="fields">
+        <label class="field">Horas reales de ustedes<input type="text" inputmode="decimal" id="ci_h" value="${ci.horas!=null?numIn(ci.horas,1):""}" placeholder="cotizadas: ${numIn(sn.horas,1)}"></label>
+        <label class="field">Gasto real en materiales, maestros y logística $<input type="text" inputmode="decimal" id="ci_g" value="${ci.gasto!=null?numIn(ci.gasto):""}" placeholder="estimado: ${numIn(sn.terceros)}"></label>
+        <label class="field">Cobrado final neto $<input type="text" inputmode="decimal" id="ci_c" value="${numIn(ci.cobrado??sn.neto)}"></label>
+        <label class="field">Nota<input type="text" id="ci_n" value="${esc(ci.nota||"")}" placeholder="Qué aprendieron"></label>
+       </div><div class="inline"><button class="btn dark" type="button" data-closesave="${x.id}">Guardar cierre</button><button class="btn ghost" type="button" data-closecancel="1">Cancelar</button></div></div>`;
+    } else if(x.status==="cerrada" && x.cierre){
+      const hm=hourModel(); const ci=x.cierre; const real=ci.cobrado-ci.gasto-ci.horas*hm.costoH; const dh=sn.horas? ci.horas/sn.horas-1 : 0;
+      closer=`<div class="closer" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><span><span class="lbl">Ganancia real</span><br><b style="color:${real<0?"var(--rojo)":"var(--verde)"}">${money(real)}</b> <span class="lbl">vs ${money(sn.ganancia)} estimada</span></span><span><span class="lbl">Horas</span><br><b>${numIn(ci.horas,1)} h</b> <span class="lbl">${dh>=0?"+":""}${pct(dh)} vs cotizado</span></span><span><span class="lbl">Gasto real</span><br><b>${money(ci.gasto)}</b> <span class="lbl">vs ${money(sn.terceros)}</span></span>${ci.nota?`<span class="lbl">${esc(ci.nota)}</span>`:""}</div>`;
+    }
+    const del = confirmDel===x.id ? `<button class="btn sm danger" type="button" data-delok="${x.id}">Sí, eliminar</button><button class="btn sm ghost" type="button" data-delno="1">No</button>` : `<button class="btn sm ghost danger" type="button" data-del="${x.id}">Eliminar</button>`;
+    return `<div class="qrow"><div class="num">${esc(x.num||"—")}${x.ver>1?` <span class="lbl">v${x.ver}</span>`:""}<small>${fdate(x.updatedAt)}</small></div>
+      <div class="nm"><b>${esc(x.nombre || tipoN+(x.m2?` ${numIn(x.m2,2)} m²`:""))}</b><span>${esc(x.cliente||"Sin cliente")} · ${esc(tipoN)} · ${esc(SCOPES[x.alcance]?.n||"")}</span></div>
+      <div><span class="st st-${x.status}">${STATUS[x.status]}</span> <span title="Semáforo" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${semC};vertical-align:middle;margin-left:4px"></span></div>
+      <div class="amt">${money(sn.neto||0)}<small>neto · gana ${money(sn.ganancia||0)}</small></div>
+      <div><select data-setst="${x.id}" aria-label="Cambiar estado" style="border:1px solid var(--line);border-radius:999px;padding:5px 8px;background:var(--card);font-size:12.5px">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${x.status===k?"selected":""}>${v}</option>`).join("")}</select></div>
+      <div class="acts"><button class="btn sm dark" type="button" data-open="${x.id}">Abrir</button>${x.status==="aceptada"||x.status==="cerrada"?`<button class="btn sm" type="button" data-close="${x.id}">${x.cierre?"Editar cierre":"Cerrar proyecto"}</button>`:""}<button class="btn sm" type="button" data-dup="${x.id}">Duplicar</button>${del}</div>
+      ${closer}</div>`;
+  }).join("");
+}
+
+// ---------- render: mes ----------
+function renderMes(){
+  const sel=document.getElementById("mesSel"); if(!sel.value) sel.value=new Date().toISOString().slice(0,7);
+  const [Y,Mo]=sel.value.split("-").map(Number);
+  const inMonth=t=>{ if(!t) return false; const d=new Date(t); return d.getFullYear()===Y && d.getMonth()+1===Mo; };
+  const all=Object.values(quotes), hm=hourModel();
+  const won=all.filter(x=>(x.status==="aceptada"||x.status==="cerrada") && inMonth(x.acceptedAt));
+  const horas=won.reduce((a,x)=>a+(x.snap?.horas||0),0), ventas=won.reduce((a,x)=>a+(x.snap?.neto||0),0), gan=won.reduce((a,x)=>a+(x.snap?.ganancia||0),0);
+  const pipe=all.filter(x=>x.status==="enviada"); const pipeV=pipe.reduce((a,x)=>a+(x.snap?.neto||0),0);
+  const decided=all.filter(x=>["aceptada","cerrada","rechazada"].includes(x.status)); const rate=decided.length? decided.filter(x=>x.status!=="rechazada").length/decided.length : null;
+  const prog=hm.equilibrio? Math.min(1,horas/hm.equilibrio):0;
+  const tipos=Object.keys(TEMPLATES).map(t=>({t,L:learning(t),cl:all.filter(x=>x.tipo===t&&x.status==="cerrada"&&x.cierre)})).filter(x=>x.cl.length);
+  document.getElementById("mesBody").innerHTML=`
+   <div class="card"><h3 style="font-size:18px">Horas vendidas este mes: ${numIn(horas,1)} de ${numIn(hm.equilibrio)} que necesitan</h3>
+    <div class="meter"><i style="width:${prog*100}%"></i></div>
+    <p class="sub" style="margin:0">${horas>=hm.equilibrio?"✓ Ya cubrieron los costos del mes: todo lo que vendan ahora es ganancia.":`Les faltan ${numIn(hm.equilibrio-horas)} horas vendidas para cubrir sueldos y gastos fijos (${fmtCLP(hm.costoMes)} al mes).`} Cuentan las cotizaciones aceptadas en el mes.</p></div>
+   <div class="kpis">
+    <div class="kpi"><span>Ventas netas aceptadas</span><b>${money(ventas)}</b><small>${won.length} ${won.length===1?"proyecto":"proyectos"}</small></div>
+    <div class="kpi"><span>Ganancia estimada</span><b>${money(gan)}</b><small>después de sus horas y terceros</small></div>
+    <div class="kpi"><span>Enviadas esperando respuesta</span><b>${money(pipeV)}</b><small>${pipe.length} cotizaciones</small></div>
+    <div class="kpi"><span>Tasa de cierre</span><b>${rate==null?"–":pct(rate)}</b><small>aceptadas sobre respondidas</small></div>
+   </div>
+   <div class="card"><h3 style="font-size:18px;margin-bottom:6px">Lo que van aprendiendo</h3>
+   ${tipos.length? `<table class="btable"><thead><tr><th>Tipo</th><th class="r">Proyectos cerrados</th><th class="r">Horas reales vs cotizadas</th><th class="r">Ganancia real</th></tr></thead><tbody>${tipos.map(x=>{const real=x.cl.reduce((a,y)=>a+(y.cierre.cobrado-y.cierre.gasto-y.cierre.horas*hm.costoH),0); return `<tr><td>${esc(TEMPLATES[x.t].n)}</td><td class="r">${x.cl.length}</td><td class="r">${x.L?(x.L.factor>=0?"+":"")+pct(x.L.factor):"–"}</td><td class="r">${money(real)}</td></tr>`;}).join("")}</tbody></table><p class="note">Al cotizar un tipo con desvío, la app ofrece ajustar las horas automáticamente.</p>`
+     : `<p class="sub" style="margin:0">Cuando cierren proyectos (en Cotizaciones → Cerrar proyecto, anotando horas y gastos reales), aquí verán si están cotizando bien cada tipo de servicio.</p>`}</div>`;
+}
+
+// ---------- render: valores ----------
+const TABS=[["estudio","Datos del estudio"],["supuestos","Supuestos"],["valorhora","Valor hora"],["proteccion","Protección"],["mat","Materiales"],["lab","Mano de obra"],["log","Logística"],["mercado","Mercado"]];
+function renderTabs(){
+  document.getElementById("tabs").innerHTML=TABS.map(([k,n])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${tab===k}">${n}</button>`).join("");
+  const P=base.params, hm=hourModel(), body=document.getElementById("tabBody");
+  const pin=(key,mult,d,label)=>`<input type="text" inputmode="decimal" data-bparam="${key}" data-mult="${mult}" value="${numIn(P[key]*mult,d)}" aria-label="${esc(label)}">`;
+  const ptable=rows=>`<div class="dwrap"><table class="btable"><thead><tr><th>Parámetro</th><th class="r">Valor</th><th>Para qué sirve</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[1]}</td><td class="r">${pin(r[0],r[2],r[3],r[1])}</td><td class="note">${r[4]}</td></tr>`).join("")}</tbody></table></div>`;
+  if(tab==="estudio"){
+    const E=base.estudio, f=[["nombre","Nombre"],["lema","Bajada"],["rut","RUT"],["correo","Correo"],["telefono","Teléfono"],["instagram","Instagram"],["ciudad","Ciudad"]];
+    body.innerHTML=`<div class="split"><div><table class="btable"><tbody>${f.map(([k,n])=>`<tr><td style="width:120px">${n}</td><td><input class="name" type="text" data-est="${k}" value="${esc(E[k]||"")}" aria-label="${n}" style="max-width:none"></td></tr>`).join("")}</tbody></table></div>
+     <div><p class="sub" style="margin-top:0">Estos datos salen en cada cotización. Sube el logo del estudio (PNG o SVG, hasta 180 KB).</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="btn dark" for="logoFile">Subir logo</label><input class="hiddenfile" type="file" id="logoFile" accept="image/*">${base.logo?`<button class="btn ghost" type="button" id="logoDel">Quitar logo</button>`:""}</div>
+      <div style="margin-top:14px;padding:16px;border:1px dashed var(--line);border-radius:12px;background:#fff">${base.logo?`<img src="${esc(base.logo)}" alt="Logo" style="max-height:70px;max-width:100%">`:`<span class="note">Sin logo: se usa el nombre en los colores del estudio.</span>`}</div></div></div>`;
+  } else if(tab==="supuestos"){
+    body.innerHTML=ptable([["uf","Valor UF ($)",1,2,"Actualizar con la UF del día (sii.cl)"],["iva","IVA (%)",100,2,"Se suma al neto con factura"],["ret","Retención boleta de honorarios (%)",100,2,"Tasa 2026"],["merma","Merma de materiales (%)",100,1,TIP.merma],["fee","Fee de gestión de producción (%)",100,1,TIP.fee],["cont","Contingencia (%)",100,1,TIP.cont],["noct","Recargo nocturno / fin de semana (%)",100,1,"Sobre jefe de montaje, electricista y montajistas"],["urg","Recargo por urgencia (%)",100,1,TIP.urg],["validez","Validez de la cotización (días)",1,0,"Sale en el documento"],["rondas","Rondas de cambios incluidas",1,0,"Sale en el documento"]]);
+  } else if(tab==="proteccion"){
+    body.innerHTML=`<p class="sub" style="margin-top:0">Reglas que evitan que pierdan plata. Cámbienlas sólo si saben por qué.</p>`+ptable([["minUF","Cobro mínimo por proyecto (UF)",1,1,"Ningún encargo baja de esto: un trabajo chico igual consume reuniones y cotización"],["margen","Margen sobre costo hora (%)",100,1,"Utilidad y colchón para meses flojos"],["premium","Extra del precio ideal (%)",100,1,TIP.ideal],["antMin","Anticipo mínimo (%)",100,0,"Nunca piden menos que esto, aunque los costos sean bajos"],["interes","Interés mensual por pago diferido (%)",100,2,TIP.plazo],["cxSimple","Factor horas proyecto simple",1,2,"0,8 = 20% menos horas"],["cxComplejo","Factor horas proyecto complejo",1,2,"1,4 = 40% más horas"],["mkLo","Mercado: mínimo $ por m²",1,0,"Stand a medida: $3 millones / 20 m²"],["mkHi","Mercado: máximo $ por m²",1,0,"Stand a medida: $10 millones / 20 m²"]]);
+  } else if(tab==="valorhora"){
+    body.innerHTML=`<div class="kpis">
+      <div class="kpi"><span>Costo mensual del estudio</span><b>${fmtCLP(hm.costoMes)}</b><small>brutos + gastos fijos</small></div>
+      <div class="kpi"><span>Horas que pueden cobrar al mes</span><b>${numIn(hm.hFact,1)} h</b><small>${base.socias.length} × ${numIn(hm.hDisp,1)} h × ${pct(P.pctFact)}</small></div>
+      <div class="kpi"><span>Costo hora</span><b>${fmtUFn(toUF(hm.costoH))} UF</b><small>${fmtCLP(hm.costoH)}</small></div>
+      <div class="kpi"><span>Precio hora con margen</span><b style="color:var(--fucsia)">${fmtUFn(toUF(hm.precioH))} UF</b><small>${fmtCLP(hm.precioH)}</small></div>
+      <div class="kpi"><span>Horas para cubrir costos</span><b>${numIn(hm.equilibrio)} h/mes</b><small>a precio con margen</small></div></div>
+     <div class="split"><div>
+      <h3 style="font-size:16px;margin-bottom:6px">Tarifas por rol (UF por hora)</h3>
+      <table class="btable"><thead><tr><th>Rol</th><th class="r">UF/h</th><th class="r">$/h</th><th class="r">vs costo</th></tr></thead><tbody>${Object.entries(base.roles).map(([k,r])=>`<tr><td>${esc(r.n)}</td><td class="r"><input type="text" inputmode="decimal" data-role="${k}" value="${numIn(r.uf,2)}" aria-label="UF por hora ${esc(r.n)}"></td><td class="r">${fmtCLP(r.uf*P.uf)}</td><td class="r"><span class="chip ${r.uf<toUF(hm.costoH)?"r":"v"}">${r.uf<toUF(hm.costoH)?"bajo costo":"ok"}</span></td></tr>`).join("")}</tbody></table>
+      <h3 style="font-size:16px;margin:18px 0 6px">Socias y horas</h3>
+      <table class="btable"><tbody>${base.socias.map((x,i)=>`<tr><td><input class="name" type="text" data-socia-n="${i}" value="${esc(x.n)}" aria-label="Nombre socia ${i+1}"></td><td class="r"><input type="text" inputmode="decimal" data-socia-v="${i}" value="${numIn(x.v)}" aria-label="Sueldo líquido"></td><td class="note">líquido al mes</td></tr>`).join("")}
+       <tr><td>Horas por semana</td><td class="r">${pin("horasSemana",1,1,"Horas por semana")}</td><td></td></tr>
+       <tr><td>Semanas trabajadas al año</td><td class="r">${pin("semanas",1,0,"Semanas")}</td><td></td></tr>
+       <tr><td>Horas facturables (%)</td><td class="r">${pin("pctFact",100,0,"% facturable")}</td><td class="note">el resto es vender y administrar</td></tr></tbody></table></div>
+     <div><h3 style="font-size:16px;margin-bottom:6px">Gastos fijos mensuales</h3>
+      <table class="btable"><tbody>${base.gastos.map((g,i)=>`<tr><td><input class="name" type="text" data-gasto-n="${i}" value="${esc(g.n)}" aria-label="Gasto"></td><td class="r"><input type="text" inputmode="decimal" data-gasto-v="${i}" value="${numIn(g.v)}" aria-label="Monto"></td><td><button class="reset" type="button" data-gasto-del="${i}" title="Quitar">✕</button></td></tr>`).join("")}<tr><td><b>Total</b></td><td class="r"><b>${fmtCLP(hm.gastos)}</b></td><td></td></tr></tbody></table>
+      <button class="btn" type="button" id="addGasto" style="margin-top:8px">+ Agregar gasto</button></div></div>`;
+  } else if(["mat","lab","log"].includes(tab)){
+    const items=base.catalog.filter(c=>c.cat===tab); const nOld=items.filter(c=>daysOld(c.f)>60).length;
+    body.innerHTML=`<div class="toolbar" style="margin-bottom:8px"><span class="note">${nOld?`<span class="old">${nOld} precios con más de 60 días</span> Revísenlos con sus proveedores.`:"Precios al día."}</span><button class="btn" type="button" id="markAll">Marcar todos como revisados hoy</button></div>
+     <div class="dwrap"><table class="btable"><thead><tr><th>Ítem</th><th>Unidad</th><th class="r">Valor $</th><th class="r">UF</th><th>Actualizado</th><th>Fuente</th></tr></thead><tbody>
+     ${items.map(c=>{const o=daysOld(c.f)>60; return `<tr><td><input class="name" type="text" data-cn="${c.id}" value="${esc(c.n)}" aria-label="Nombre"></td><td>${esc(c.u)}${c.night?' <span class="chip c">nocturno</span>':""}</td><td class="r"><input type="text" inputmode="decimal" data-cp="${c.id}" value="${numIn(c.p)}" aria-label="Valor ${esc(c.n)}"></td><td class="r">${fmtUFn(toUF(c.p),3)}</td><td>${o?`<span class="old">${esc(c.f||"sin fecha")}</span>`:esc(c.f||"")}</td><td>${c.est?'<span class="est">Estimado</span>':esc(c.src||"")}</td></tr>`;}).join("")}
+     </tbody></table></div><button class="btn" type="button" id="addItem" style="margin-top:10px">+ Agregar ítem</button>`;
+  } else if(tab==="mercado"){
+    const B=[["Stand a medida 20 m² (iluminación, mobiliario, pantalla)","$3.000.000 – $10.000.000","https://agenciadeprensa.cl/blog/que-es-un-stand-publicitario","Esbuenisimo Labs"],["Stand de feria básico (freelance)","$500.000 – $1.000.000","https://www.2x3.cl/p/precios-stand-para-ferias","2x3"],["Proyecto de interiorismo","0,5 – 1,5 UF/m²","https://www.cronoshare.cl/cuanto-cuesta/diseno-interiores","Cronoshare"],["Proyecto de arquitectura","0,8 – 1,5 UF/m²","https://www.2x3.cl/profesional/w-arquitectura","W Arquitectura (2x3)"],["Estudio de interiorismo independiente","Visita $74.900 · diseño $16.900–29.900/m² · gestión 20%","https://www.2x3.cl/profesional/valenzuela-miranda-interiorismo","Valenzuela Miranda"],["Diseño gráfico","$20.000 – $60.000 por hora","https://www.cronoshare.cl/cuanto-cuesta/diseno-grafico","Cronoshare"],["Productora de evento social","$100.000 – $500.000","https://www.2x3.cl/p/precios-productora-eventos","2x3"]];
+    body.innerHTML=`<div class="dwrap"><table class="btable"><thead><tr><th>Servicio</th><th>Rango</th><th>Fuente</th></tr></thead><tbody>${B.map(b=>`<tr><td>${b[0]}</td><td>${b[1]}</td><td><a href="${b[2]}" target="_blank" rel="noopener">${b[3]}</a></td></tr>`).join("")}</tbody></table></div>`;
+  }
+}
+
+function renderTop(){
+  document.getElementById("ufTop").value=numIn(base.params.uf,2);
+  document.querySelectorAll("[data-mode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===mode));
+  const sp=document.getElementById("sync");
+  sp.className="syncpill "+(online?"ok":"warn");
+  sp.querySelector("span").textContent= online? "Guardado para las dos" : "Sólo en este navegador";
+}
+function renderView(){
+  for(const v of ["cotizar","cotizaciones","mes","valores"]) document.getElementById("v-"+v).hidden = v!==view;
+  document.querySelectorAll("nav.views a").forEach(a=>a.setAttribute("aria-current", a.dataset.view===view?"page":"false"));
+  document.getElementById("bottombar").hidden = view!=="cotizar";
+  renderTop(); renderLogo();
+  if(view==="cotizar") renderEditor(); else if(view==="cotizaciones") renderList(); else if(view==="mes") renderMes(); else renderTabs();
+}
+
+// ---------- persistencia ----------
+let saveQT=null, saveBT=null, writingQ=Promise.resolve(), writingB=Promise.resolve();
+function setStatus(t){ document.getElementById("status").textContent=t; }
+function hasContent(qq){ return Object.values(qq.lines).some(l=>l.on) || qq.nombre || qq.cliente; }
+function nextNum(){
+  const yy=String(new Date().getFullYear()).slice(2);
+  const ns=Object.values(quotes).map(x=>x.num).filter(n=>n&&n.startsWith(`COT-${yy}-`)).map(n=>parseInt(n.split("-")[2],10)||0);
+  return `COT-${yy}-${String((ns.length?Math.max(...ns):0)+1).padStart(3,"0")}`;
+}
+function touch(){ // la cotización abierta cambió
+  if(!editedThisOpen && q.num && ["enviada","aceptada"].includes(q.status) && q.snap){
+    q.hist=[...(q.hist||[]), {v:q.ver, t:q.updatedAt, neto:q.snap.neto}]; q.ver+=1;
+  }
+  editedThisOpen=true;
+  q.updatedAt=Date.now();
+  clearTimeout(saveQT); saveQT=setTimeout(saveQuote, 900);
+  setStatus("Guardando…");
+}
+function saveQuote(){
+  if(!hasContent(q)){ setStatus(""); return; }
+  if(!q.num) q.num=nextNum();
+  q.snap=snapOf(q);
+  const doc=clone(q); quotes[q.id]=doc;
+  renderBottom(calc(q));
+  document.getElementById("paper").innerHTML=paperHTML(q,calc(q));
+  const n=Object.keys(quotes).length; const nc=document.getElementById("navCount"); nc.hidden=!n; nc.textContent=n;
+  writingQ = writingQ.then(()=>persistQuote(doc)).catch(()=>{});
+}
+async function persistQuote(doc){
+  if(db){ try{ await db.collection("quotes").doc(doc.id).set(doc); setStatus(`Guardada ${doc.num}${doc.ver>1?" v"+doc.ver:""} ✓`); return; }catch(e){ if(e&&e.code==="quota_exceeded"){ setStatus("La carpeta está llena: eliminen cotizaciones antiguas."); return; } } }
+  try{ localStorage.setItem("popurri-quotes", JSON.stringify(quotes)); setStatus(`Guardada ${doc.num} en este navegador ✓`); }catch(_){ setStatus("No se pudo guardar."); }
+}
+async function deleteQuote(id){
+  delete quotes[id];
+  if(db){ try{ await db.collection("quotes").doc(id).delete(); }catch(_){} }
+  try{ localStorage.setItem("popurri-quotes", JSON.stringify(quotes)); }catch(_){}
+}
+function saveQuoteObj(obj){ quotes[obj.id]=obj; writingQ=writingQ.then(()=>persistQuote(clone(obj))).catch(()=>{}); }
+function baseChanged(){
+  clearTimeout(saveBT); saveBT=setTimeout(()=>{ const b=clone(base); b.savedAt=Date.now(); writingB=writingB.then(async()=>{
+    if(db){ try{ await db.doc("config/base").set(b); return; }catch(_){} }
+    try{ localStorage.setItem("popurri-base2", JSON.stringify(b)); }catch(_){}
+  }).catch(()=>{}); }, 900);
+}
+function mergeBase(b){ const m=clone(DEFAULT_BASE); Object.assign(m,b); m.params=Object.assign(clone(DEFAULT_BASE.params),b.params||{}); m.estudio=Object.assign(clone(DEFAULT_BASE.estudio),b.estudio||{});
+  if(Array.isArray(b.catalog)){ const ids=new Set(b.catalog.map(c=>c.id)); m.catalog=[...b.catalog, ...DEFAULT_BASE.catalog.filter(c=>!ids.has(c.id))]; }
+  return m; }
+
+// ---------- eventos: navegación ----------
+function route(){ const h=(location.hash||"#cotizar").slice(1); view=["cotizar","cotizaciones","mes","valores"].includes(h)?h:"cotizar"; renderView(); }
+window.addEventListener("hashchange", route);
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{ mode=b.dataset.mode; renderView(); }));
+document.getElementById("ufTop").addEventListener("change",e=>{ const v=parseNum(e.target.value); if(v>1000){ base.params.uf=v; baseChanged(); } renderView(); });
+
+// ---------- eventos: cotizar ----------
+let briefT;
+document.getElementById("brief").addEventListener("input",e=>{
+  q.texto=e.target.value; clearTimeout(briefT);
+  briefT=setTimeout(()=>{ const d=applyDetection(); fillInputs(); document.getElementById("brief").value=q.texto; renderEditor(d); touch(); },300);
+});
+document.getElementById("qName").addEventListener("input",e=>{ q.nombre=e.target.value; document.getElementById("paper").innerHTML=paperHTML(q,calc(q)); touch(); });
+document.getElementById("qClient").addEventListener("input",e=>{ q.cliente=e.target.value; document.getElementById("paper").innerHTML=paperHTML(q,calc(q)); touch(); });
+document.getElementById("qM2").addEventListener("change",e=>{ q.m2=parseNum(e.target.value); if(q.tipo) loadTemplate(q.tipo,q.m2,true); fillInputs(); renderEditor(); touch(); });
+document.getElementById("types").addEventListener("click",e=>{ const b=e.target.closest("[data-type]"); if(!b) return;
+  loadTemplate(b.dataset.type, q.m2||null, false);
+  for(const k of detect(q.texto).mods) for(const id of MODS.find(x=>x.k===k).on){ if(q.lines[id]) q.lines[id].on=true; else q.lines[id]={on:true,q:defaultQty(id),p:null}; }
+  fillInputs(); renderEditor(); touch(); });
+document.getElementById("scopes").addEventListener("click",e=>{ const b=e.target.closest("[data-scope]"); if(!b) return; q.alcance=b.dataset.scope;
+  if(q.alcance==="diseno"){ for(const id of ["h_render","h_planos","h_espec"]) if(!q.lines[id]) q.lines[id]={on:true,q:defaultQty(id),p:null}; }
+  renderEditor(); touch(); });
+document.getElementById("optrow").addEventListener("click",e=>{ const b=e.target.closest("[data-cx]"); if(!b) return; q.cx=b.dataset.cx; renderEditor(); touch(); });
+document.getElementById("optrow").addEventListener("change",e=>{ if(e.target.id==="tNoct") q.noct=e.target.checked; if(e.target.id==="tUrg") q.urg=e.target.checked; renderEditor(); touch(); });
+document.getElementById("learnBox").addEventListener("click",e=>{ if(e.target.id==="learnOn"){ const L=learning(q.tipo); q.learn=L?L.factor:0; } if(e.target.id==="learnOff") q.learn=0; renderEditor(); touch(); });
+document.getElementById("groups").addEventListener("change",e=>{ const id=e.target.dataset.ck; if(!id) return; const ln=q.lines[id]; if(ln) ln.on=e.target.checked; else q.lines[id]={on:true,q:defaultQty(id),p:null}; renderEditor(); touch(); });
+document.getElementById("checklist").addEventListener("click",e=>{ const b=e.target.closest("[data-ex]"); if(!b) return; const k=b.dataset.ex; const x=q.extras[k]||{}; const a=b.dataset.ans==="1"; x.ans = x.ans===a? null : a; q.extras[k]=x; renderEditor(); touch(); });
+document.getElementById("checklist").addEventListener("change",e=>{ const k=e.target.dataset.exv; if(!k) return; const x=q.extras[k]||{ans:true}; x.v=parseNum(e.target.value); q.extras[k]=x; renderEditor(); touch(); });
+document.getElementById("dtable").addEventListener("change",e=>{ const t=e.target,d=t.dataset;
+  if(d.q) q.lines[d.q].q=Math.max(0,parseNum(t.value));
+  else if(d.p){ const c=cat(d.p), v=parseNum(t.value), bv=c.cat==="hon"? base.roles[c.role].uf : c.p; q.lines[d.p].p = Math.abs(v-bv)<1e-9? null : v; }
+  else if(d.an){ const a=q.adic.find(x=>x.id===d.an); a.n=t.value; }
+  else if(d.ah){ q.adic.find(x=>x.id===d.ah).h=parseNum(t.value); }
+  else if(d.ac){ q.adic.find(x=>x.id===d.ac).costo=parseNum(t.value); }
+  else return;
+  renderEditor(); touch(); });
+document.getElementById("dtable").addEventListener("click",e=>{
+  const r=e.target.closest("[data-reset]"); if(r){ q.lines[r.dataset.reset].p=null; renderEditor(); touch(); return; }
+  const a=e.target.closest("[data-adel]"); if(a){ q.adic=q.adic.filter(x=>x.id!==a.dataset.adel); renderEditor(); touch(); } });
+document.getElementById("addAdic").addEventListener("click",()=>{ q.adic=[...(q.adic||[]),{id:uid("a"),n:"Adicional solicitado por el cliente",h:2,costo:0}]; renderEditor(); touch(); });
+document.getElementById("finance").addEventListener("click",e=>{
+  const t=e.target.closest("[data-tier]"); if(t){ q.tier=t.dataset.tier; renderEditor(); touch(); return; }
+  if(e.target.id==="antAuto"){ q.ant=null; renderEditor(); touch(); } });
+document.getElementById("finance").addEventListener("change",e=>{ const id=e.target.id, v=e.target.value;
+  if(id==="antIn") q.ant=Math.min(1,Math.max(0,parseNum(v)/100));
+  else if(id==="descIn") q.desc=Math.min(0.9,Math.max(0,parseNum(v)/100));
+  else if(id==="docSel") q.doc=v;
+  else if(id==="plazoSel") q.plazo=+v;
+  else if(id==="budIn") q.presupuesto=parseNum(v);
+  else return;
+  renderEditor(); touch(); });
+document.getElementById("qStatus").addEventListener("change",e=>{ q.status=e.target.value; if((q.status==="aceptada")&&!q.acceptedAt) q.acceptedAt=Date.now(); editedThisOpen=true; q.updatedAt=Date.now(); saveQuote(); renderBottom(calc(q)); });
+document.getElementById("showMat").addEventListener("change",e=>{ q.showMat=e.target.checked; renderEditor(); touch(); });
+function openQuote(id){ q=clone(quotes[id]); editedThisOpen=false; lastSig=JSON.stringify(detect(q.texto)); fillInputs(); location.hash="#cotizar"; if(view==="cotizar") renderView(); setStatus(`${q.num||""} abierta.`); }
+function startNew(){ q=newQuote(); editedThisOpen=false; lastSig=""; fillInputs(); location.hash="#cotizar"; if(view==="cotizar") renderView(); setStatus("Cotización nueva."); }
+function duplicate(id){ const src=quotes[id]||q; const d=clone(src); Object.assign(d,{id:uid("q_"),num:null,ver:1,status:"borrador",hist:[],cierre:null,acceptedAt:null,createdAt:Date.now(),updatedAt:Date.now(),nombre:(src.nombre?src.nombre+" (copia)":"")}); q=d; editedThisOpen=true; lastSig=JSON.stringify(detect(q.texto)); saveQuote(); fillInputs(); location.hash="#cotizar"; if(view==="cotizar") renderView(); setStatus(`Duplicada como ${q.num}.`); }
+document.getElementById("btnNew").addEventListener("click",startNew);
+document.getElementById("btnNew2").addEventListener("click",startNew);
+document.getElementById("btnDup").addEventListener("click",()=>{ if(q.num) duplicate(q.id); else setStatus("Guarda la cotización antes de duplicarla."); });
+
+// ---------- eventos: lista ----------
+document.getElementById("qSearch").addEventListener("input",renderList);
+document.getElementById("stFilter").addEventListener("click",e=>{ const b=e.target.closest("[data-st]"); if(!b) return; stFilter=b.dataset.st; renderList(); });
+document.getElementById("qlist").addEventListener("click",e=>{
+  const g=s=>e.target.closest(s); let b;
+  if(b=g("[data-open]")) return openQuote(b.dataset.open);
+  if(b=g("[data-dup]")) return duplicate(b.dataset.dup);
+  if(b=g("[data-del]")){ confirmDel=b.dataset.del; return renderList(); }
+  if(g("[data-delno]")){ confirmDel=null; return renderList(); }
+  if(b=g("[data-delok]")){ const id=b.dataset.delok; confirmDel=null; deleteQuote(id); if(q.id===id) q=newQuote(); return renderList(); }
+  if(b=g("[data-close]")){ closingId=b.dataset.close; return renderList(); }
+  if(g("[data-closecancel]")){ closingId=null; return renderList(); }
+  if(b=g("[data-closesave]")){ const x=quotes[b.dataset.closesave];
+    x.cierre={horas:parseNum(document.getElementById("ci_h").value)||x.snap.horas, gasto:parseNum(document.getElementById("ci_g").value)||x.snap.terceros, cobrado:parseNum(document.getElementById("ci_c").value)||x.snap.neto, nota:document.getElementById("ci_n").value, t:Date.now()};
+    x.status="cerrada"; x.updatedAt=Date.now(); if(!x.acceptedAt) x.acceptedAt=Date.now(); saveQuoteObj(x); closingId=null; if(q.id===x.id) q=clone(x); renderList(); }
+});
+document.getElementById("qlist").addEventListener("change",e=>{ const id=e.target.dataset.setst; if(!id) return; const x=quotes[id]; x.status=e.target.value; if(x.status==="aceptada"&&!x.acceptedAt) x.acceptedAt=Date.now(); x.updatedAt=Date.now(); saveQuoteObj(x); if(q.id===id) q.status=x.status; if(x.status==="cerrada"&&!x.cierre) closingId=id; renderList(); });
+document.getElementById("mesSel").addEventListener("change",renderMes);
+
+// ---------- eventos: valores ----------
+document.getElementById("tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(!b) return; tab=b.dataset.tab; renderTabs(); });
+document.getElementById("tabBody").addEventListener("change",e=>{
+  const t=e.target, d=t.dataset, P=base.params;
+  if(t.id==="logoFile"){ const f=t.files[0]; if(!f) return; if(f.size>180*1024){ alertTab("El logo pesa más de 180 KB. Exporta un PNG más chico o un SVG."); return; } const r=new FileReader(); r.onload=()=>{ base.logo=r.result; baseChanged(); renderLogo(); renderTabs(); }; r.readAsDataURL(f); return; }
+  if(d.bparam){ const v=parseNum(t.value)/(+d.mult); if(d.bparam==="uf"&&v<1000) return; P[d.bparam]=v; }
+  else if(d.est){ base.estudio[d.est]=t.value; }
+  else if(d.role){ base.roles[d.role].uf=parseNum(t.value); }
+  else if(d.sociaN!=null){ base.socias[+d.sociaN].n=t.value; }
+  else if(d.sociaV!=null){ base.socias[+d.sociaV].v=parseNum(t.value); }
+  else if(d.gastoN!=null){ base.gastos[+d.gastoN].n=t.value; }
+  else if(d.gastoV!=null){ base.gastos[+d.gastoV].v=parseNum(t.value); }
+  else if(d.cn){ cat(d.cn).n=t.value; }
+  else if(d.cp){ const c=cat(d.cp); c.p=parseNum(t.value); c.f=TODAY; }
+  else return;
+  baseChanged(); renderTop(); renderTabs(); });
+function alertTab(msg){ const el=document.createElement("div"); el.className="banner"; el.textContent=msg; document.getElementById("tabBody").prepend(el); }
+document.getElementById("tabBody").addEventListener("click",e=>{
+  const id=e.target.id;
+  if(id==="addGasto"){ base.gastos.push({n:"Nuevo gasto",v:0}); }
+  else if(id==="addItem"){ base.catalog.push({id:tab[0]+"_x"+Date.now().toString(36),cat:tab,n:"Nuevo ítem",u:tab==="lab"?"jornada":"unidad",p:0,est:true,f:TODAY}); }
+  else if(id==="markAll"){ base.catalog.filter(c=>c.cat===tab).forEach(c=>c.f=TODAY); }
+  else if(id==="logoDel"){ base.logo=null; renderLogo(); }
+  else if(e.target.dataset.gastoDel!=null){ base.gastos.splice(+e.target.dataset.gastoDel,1); }
+  else return;
+  baseChanged(); renderTabs(); });
+
+// ---------- copiar y descargar ----------
+document.getElementById("btnCopy").addEventListener("click", async ()=>{
+  const s=calc(q), sec=docLines(q,s);
+  const txt=[`${base.estudio.nombre} · Cotización ${quoteNum(q)}`, `${q.nombre||document.getElementById("qName").placeholder}${q.cliente?" · "+q.cliente:""}`, "",
+    ...sec.flatMap(x=>[x.n.toUpperCase(), ...x.items.map(i=>`  ${i.n}: ${fmtCLP(i.v)}`)]),
+    "", q.desc>0?`Descuento ${pct(q.desc,1)}: ${fmtCLP(-s.descAmt)}`:"",
+    q.doc==="boleta"?`Total honorarios (boleta): ${fmtCLP(s.bruto)}`:`Neto: ${fmtCLP(s.neto)} (${fmtUFn(toUF(s.neto))} UF)\nIVA: ${fmtCLP(s.iva)}\nTotal: ${fmtCLP(s.total)}`,
+    "", "Pago: "+s.pagos.map(p=>`${pct(p[0])} ${p[1].toLowerCase()}`).join(" / ")+`. Validez ${base.params.validez} días.`].filter(l=>l!=="").join("\n");
+  try{ await navigator.clipboard.writeText(txt); setStatus("Resumen copiado: pégalo en el correo o WhatsApp."); }catch(_){ setStatus("El navegador no dejó copiar."); }
+});
+function fileName(ext){ return (quoteNum(q)+"-"+norm(q.cliente||q.nombre||"popurri").replace(/[^a-z0-9]+/g,"-")).replace(/-+$/,"")+"."+ext; }
+document.getElementById("btnDl").addEventListener("click", async ()=>{
+  const s=calc(q);
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Cotización ${esc(quoteNum(q))} · ${esc(base.estudio.nombre)}</title><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet"><style>body{background:#eef1f2;margin:0;padding:24px}${document.getElementById("paperCss").textContent}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}}</style></head><body>${paperHTML(q,s)}</body></html>`;
+  try{ await saveFile(fileName("html"), new Blob([html],{type:"text/html"})); setStatus("Descargada. Ábrela y usa Imprimir → Guardar como PDF."); }catch(_){ setStatus("No se descargó."); }
+});
+document.getElementById("btnCsv").addEventListener("click", async ()=>{
+  const s=calc(q), L=[["Categoría","Partida","Cantidad","Unidad","Valor unitario","Unidad valor","Subtotal CLP","Subtotal UF"]];
+  for(const l of s.lines) L.push([CATS[l.c.cat].short,l.c.n,l.ln.q,l.c.u,l.p,l.c.cat==="hon"?"UF/h":"CLP",Math.round(l.v),toUF(l.v).toFixed(2)]);
+  for(const x of s.extraLines) L.push(["Olvidados",x.e.n,x.val,x.e.unit,"","",Math.round(x.v),toUF(x.v).toFixed(2)]);
+  L.push([]); [["Merma",s.merma],["Fee gestión",s.fee],["Contingencia",s.cont],["Urgencia",s.urg],["Pago diferido",s.fin],["Precio mínimo",s.minimo],["Precio recomendado",s.rec],["Descuento",-s.descAmt],["Precio neto",s.neto],["IVA",s.iva],["Total",s.total],["Proveedores y maestros",s.terceros],["Horas a costo",s.costoHoras],["Ganancia",s.ganancia]].forEach(r=>L.push(["Resumen",r[0],"","","","",Math.round(r[1]),toUF(r[1]).toFixed(2)]));
+  const csv="﻿"+L.map(r=>r.map(x=>`"${String(x??"").replace(/"/g,'""')}"`).join(";")).join("\n");
+  try{ await saveFile(fileName("csv"), new Blob([csv],{type:"text/csv"})); setStatus("Desglose descargado (se abre en Excel)."); }catch(_){ setStatus("No se descargó."); }
+});
+
+async function saveFile(name, blob){
+  if(downloadsNS) return downloadsNS.save({filename:name, data:blob});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+// ---------- arranque ----------
+function boot(){
+  try{ const lq=JSON.parse(localStorage.getItem("popurri-quotes")||"null"); if(lq) quotes=lq; }catch(_){}
+  try{ const lb=JSON.parse(localStorage.getItem("popurri-base2")||"null"); if(lb) base=mergeBase(lb); }catch(_){}
+  q=newQuote(); q.texto="Pop-up de 12 m² en un mall, montaje de noche"; applyDetection(true);
+  fillInputs(); route();
+  const hot=window.claude?.hot; hot?.snapshot?.(()=>({qid:q.id}));
+}
+boot();
+
+if(!(window.claude && window.claude.use)){ document.getElementById("btnDl").hidden=false; document.getElementById("btnCsv").hidden=false; }
+if(window.claude && window.claude.use){
+  const timer=setTimeout(()=>{ if(!online){ renderTop(); } },10000);
+  window.claude.use("db").then(ns=>{
+    if(!ns){ renderTop(); return; }
+    db=ns;
+    db.doc("config/base").onSnapshot(snap=>{
+      clearTimeout(timer); online=true;
+      if(snap.exists){ const b=snap.data(); if(!snap.metadata.hasPendingWrites){ base=mergeBase(b); renderView(); } }
+      renderTop();
+    },()=>{ renderTop(); });
+    db.collection("quotes").onSnapshot(snap=>{
+      online=true;
+      const remote={}; for(const d of snap.docs) remote[d.id]=d.data();
+      // subir lo que estaba sólo en este navegador
+      for(const [id,x] of Object.entries(quotes)) if(!remote[id] && !snap.metadata.fromCache){ db.collection("quotes").doc(id).set(clone(x)).catch(()=>{}); remote[id]=x; }
+      quotes=clone(remote);
+      try{ localStorage.removeItem("popurri-quotes"); }catch(_){}
+      if(view==="cotizaciones") renderList(); else if(view==="mes") renderMes();
+      const n=Object.keys(quotes).length; const nc=document.getElementById("navCount"); nc.hidden=!n; nc.textContent=n;
+      renderTop();
+    },()=>{ renderTop(); });
+  }).catch(()=>{});
+  window.claude.use("downloads").then(ns=>{ downloadsNS=ns; if(ns){ document.getElementById("btnDl").hidden=false; document.getElementById("btnCsv").hidden=false; } }).catch(()=>{});
+}
+})();
+</script>
+</body>
+</html>
