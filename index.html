@@ -246,6 +246,24 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
 @media (max-width:860px){.split{grid-template-columns:1fr}}
 .hiddenfile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .banner{background:var(--amarillo-soft);color:var(--amarillo);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+/* ---------- planes ---------- */
+.plsel{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
+.plsel button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;cursor:pointer;text-align:left;font-weight:700;font-size:14px;display:grid;gap:2px}
+.plsel button small{font-weight:500;font-size:12px;color:var(--muted)}
+.plsel button[aria-pressed="true"]{border-color:var(--pc);background:var(--pcs);box-shadow:inset 0 0 0 1px var(--pc)}
+.pl-b{--pc:var(--fucsia);--pcs:var(--fucsia-soft)} .pl-i{--pc:var(--verde);--pcs:var(--verde-soft)} .pl-c{--pc:var(--calipso);--pcs:var(--calipso-soft)}
+.plparams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.dtable input.plh{width:70px;background:#fff8dc;border-color:#e6cf7a;font-weight:700}
+.dtable input.plh.adj{border-color:var(--fucsia);background:var(--fucsia-soft)}
+.dtable td.rng{color:var(--muted)}
+.pltot td{font-weight:800;background:var(--ink);color:var(--card)}
+.plinc{margin:0;padding-left:18px;columns:2;column-gap:20px;font-size:13.5px}
+.plinc li{margin:3px 0;break-inside:avoid}
+.plsum{display:grid;gap:0;margin-top:6px}
+.plsum div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.plsum div.big{font-weight:800;font-size:18px;border-bottom:0;background:var(--verde);color:#fff;padding:12px 14px;border-radius:12px;margin-top:10px}
+.plsum div.mid{font-weight:700;background:var(--fucsia-soft);padding:8px 10px;border-radius:10px;border-bottom:0;margin-top:6px}
+@media (max-width:560px){.plinc{columns:1}}
 </style>
 <style id="paperCss">
 /* Documento de cotización (siempre en claro, como papel) */
@@ -283,6 +301,7 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
   <div class="logo"><div id="logoSlot"></div></div>
   <nav class="views" aria-label="Secciones">
     <a href="#cotizar" data-view="cotizar">Cotizar</a>
+    <a href="#planes" data-view="planes">Planes</a>
     <a href="#cotizaciones" data-view="cotizaciones">Cotizaciones<span class="n" id="navCount" hidden></span></a>
     <a href="#mes" data-view="mes">Mi mes</a>
     <a href="#valores" data-view="valores">Valores base</a>
@@ -367,6 +386,27 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
         <button class="btn ghost" type="button" id="btnNew">Nueva cotización</button>
       </div>
       <div class="status" id="status" aria-live="polite"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ PLANES ============ -->
+<section class="view" id="v-planes" hidden>
+  <div class="ed">
+    <div class="col">
+      <section class="card" aria-labelledby="hPl">
+        <h2 id="hPl">Planes de diseño y producción</h2>
+        <p class="sub">Elige un plan. Cada etapa trae su rango de horas; las horas a cobrar parten en el promedio y se pueden cambiar (quedan en fucsia; ↺ vuelve al promedio).</p>
+        <div class="plsel" id="plSel" role="group" aria-label="Plan"></div>
+        <div class="plparams" id="plParams"></div>
+        <div class="dwrap"><table class="dtable" id="plTable"></table></div>
+      </section>
+    </div>
+    <aside class="col" aria-label="Resumen del plan">
+      <section class="card"><h2 style="font-size:18px">Incluye</h2><ul class="plinc" id="plInc"></ul></section>
+      <section class="card"><h2 style="font-size:18px">Valor del plan</h2><div class="plsum" id="plSum"></div>
+        <div class="inline" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="plCopy">Copiar resumen</button><button class="btn ghost" type="button" id="plReset">Restablecer horas</button></div>
+        <div class="status" id="plStatus" aria-live="polite"></div></section>
     </aside>
   </div>
 </section>
@@ -1107,11 +1147,11 @@ function renderTop(){
   sp.querySelector("span").textContent= online? "Guardado para las dos" : "Sólo en este navegador";
 }
 function renderView(){
-  for(const v of ["cotizar","cotizaciones","mes","valores"]) document.getElementById("v-"+v).hidden = v!==view;
+  for(const v of ["cotizar","planes","cotizaciones","mes","valores"]) document.getElementById("v-"+v).hidden = v!==view;
   document.querySelectorAll("nav.views a").forEach(a=>a.setAttribute("aria-current", a.dataset.view===view?"page":"false"));
   document.getElementById("bottombar").hidden = view!=="cotizar";
   renderTop(); renderLogo();
-  if(view==="cotizar") renderEditor(); else if(view==="cotizaciones") renderList(); else if(view==="mes") renderMes(); else renderTabs();
+  if(view==="cotizar") renderEditor(); else if(view==="planes") renderPlanes(); else if(view==="cotizaciones") renderList(); else if(view==="mes") renderMes(); else renderTabs();
 }
 
 // ---------- persistencia ----------
@@ -1162,8 +1202,98 @@ function mergeBase(b){ const m=clone(DEFAULT_BASE); Object.assign(m,b); m.params
   if(Array.isArray(b.catalog)){ const ids=new Set(b.catalog.map(c=>c.id)); m.catalog=[...b.catalog, ...DEFAULT_BASE.catalog.filter(c=>!ids.has(c.id))]; }
   return m; }
 
+// ---------- planes (mismos datos que la planilla "Planes Popurrí Studio - Cotización") ----------
+const PL_BASE=["Concepto","Paleta","Materiales/texturas","Atmósfera"];
+const plInc=(n,prodB)=>{ const s=n>1?` (${n})`:""; return [...PL_BASE,`Diseño espacial${s}`,`Planimetrías${s}`,`Moodboard${s}`,`Fotomontaje${s}`,"Listado de materiales",...(prodB?["Cotización completa","Compra de materiales","Mano de obra"]:["Costos aproximados","Mano de obra de elaboración"])]; };
+const plStagesB=(esp,pla,moo,fot)=>[["D","Reuniones / levantamiento",2,3],["D","Concepto",3,4],["D","Materialidad / atmósfera",3,5],["D","Diseño espacial",...esp],["D","Planimetría",...pla],["D","Moodboard",...moo],["D","Fotomontaje",...fot],
+  ["P","Listado de materiales",2,3],["P","Cotización",3,5],["P","Coordinación de compras",5,8],["P","Mano de obra / producción",12,15],["G","Correcciones",3,4]];
+const PLANES={
+  b1:{n:"Plan Básico I",sub:"Diseño A + Producción A",cls:"pl-b",d:"A",p:"A",inc:[...PL_BASE,"Moodboard","Fotomontaje","Listado de materiales","Costos aproximados","Mano de obra de elaboración"],
+    st:[["D","Reunión inicial / levantamiento",1,2],["D","Conceptualización",3,4],["D","Paleta / materiales / atmósfera",2,3],["D","Moodboard",2,3],["D","Fotomontaje",3,5],["P","Listado de materiales",2,3],["P","Estimación de costos",2,3],["P","Estimación mano de obra",10,12],["G","Correcciones / coordinación",2,3]]},
+  b2:{n:"Plan Básico II",sub:"Diseño B + Producción B",cls:"pl-b",d:"B",p:"B",inc:plInc(1,true),st:plStagesB([5,8],[5,8],[2,3],[3,5])},
+  i1:{n:"Plan Integral I",sub:"2 propuestas Diseño B + Producción A",cls:"pl-i",d:"B",p:"A",inc:plInc(2,false),st:plStagesB([8,10],[8,10],[5,7],[6,8])},
+  i2:{n:"Plan Integral II",sub:"2 propuestas Diseño B + Producción B",cls:"pl-i",d:"B",p:"B",inc:plInc(2,true),st:plStagesB([8,10],[8,10],[5,7],[6,8])},
+  c1:{n:"Plan Completo I",sub:"3 propuestas Diseño B + Producción A",cls:"pl-c",d:"B",p:"A",inc:plInc(3,false),st:plStagesB([10,12],[10,12],[6,8],[7,9])},
+  c2:{n:"Plan Completo II",sub:"3 propuestas Diseño B + Producción B",cls:"pl-c",d:"B",p:"B",inc:plInc(3,true),st:plStagesB([10,12],[10,12],[6,8],[7,9])}
+};
+const PL_FACT=[["Pequeño y simple",1],["Mediano",1.25],["Grande",1.5],["Grande y complejo",2]];
+const PL_URG=[["Sin recargo (0%)",0],["Urgencia baja (10%)",0.1],["Urgencia media (20%)",0.2],["Urgencia alta (30%)",0.3]];
+const PL_MONT=[["sin","Sin montaje"],["a","Opción A: equipo de Popurrí"],["b","Opción B: dirección con equipo del cliente"]];
+let pl={plan:"b1", vh:20000, pers:2, fac:1, urg:0, mont:"sin", mA:0, mB:0, hrs:{}};
+try{ const lp=JSON.parse(localStorage.getItem("popurri-planes")||"null"); if(lp) pl=Object.assign(pl,lp); }catch(_){}
+if(!PLANES[pl.plan]) pl.plan="b1";
+function plSave(){ try{ localStorage.setItem("popurri-planes", JSON.stringify(pl)); }catch(_){} }
+const plMid=st=>(st[2]+st[3])/2;
+function plHours(id){ const P=PLANES[id], o=pl.hrs[id]||{}; return P.st.map((st,i)=> o[i]!=null? o[i] : plMid(st)); }
+function plCalc(){
+  const P=PLANES[pl.plan], h=plHours(pl.plan), rate=pl.vh*pl.pers;
+  const rows=P.st.map((st,i)=>({st,i,h:h[i],v:h[i]*rate}));
+  const hMin=P.st.reduce((a,x)=>a+x[2],0), hMax=P.st.reduce((a,x)=>a+x[3],0), hTot=h.reduce((a,x)=>a+x,0);
+  const base=hTot*rate, fac=PL_FACT[pl.fac][1], conFac=base*fac, urg=conFac*PL_URG[pl.urg][1], serv=conFac+urg;
+  const mont= pl.mont==="a"? pl.mA : pl.mont==="b"? pl.mB : 0;
+  return {P,rows,rate,hMin,hMax,hTot,base,fac,conFac,urg,serv,mont,total:serv+mont};
+}
+function renderPlanes(){
+  const c=plCalc(), P=c.P;
+  document.getElementById("plSel").innerHTML=Object.entries(PLANES).map(([id,x])=>`<button type="button" class="${x.cls}" data-pl="${id}" aria-pressed="${id===pl.plan}">${esc(x.n)}<small>${esc(x.sub)}</small></button>`).join("");
+  const opt=(arr,sel)=>arr.map((x,i)=>`<option value="${i}"${i===sel?" selected":""}>${esc(x[0])}</option>`).join("");
+  document.getElementById("plParams").innerHTML=`
+    <label class="field">Valor hora por persona ($)<input type="text" inputmode="decimal" id="plVh" value="${numIn(pl.vh)}"></label>
+    <label class="field">Personas<input type="text" inputmode="decimal" id="plPers" value="${numIn(pl.pers)}"></label>
+    <label class="field">Tamaño y complejidad<select id="plFac">${opt(PL_FACT,pl.fac)}</select></label>
+    <label class="field">Urgencia<select id="plUrg">${opt(PL_URG,pl.urg)}</select></label>
+    <label class="field">Montaje<select id="plMont">${PL_MONT.map(m=>`<option value="${m[0]}"${m[0]===pl.mont?" selected":""}>${esc(m[1])}</option>`).join("")}</select></label>
+    ${pl.mont!=="sin"?`<label class="field">Valor del montaje ($)<input type="text" inputmode="decimal" id="plMv" value="${numIn(pl.mont==="a"?pl.mA:pl.mB)}"></label>`:""}`;
+  const secs={D:[`Diseño (Opción ${P.d})`,"g-hon"],P:[`Producción (Opción ${P.p})`,"g-mat"],G:["General","g-lab"]};
+  let rows=`<tr><th>Etapa</th><th>Rango h</th><th>Horas a cobrar</th><th>Valor</th><th></th></tr>`, cur=null;
+  const o=pl.hrs[pl.plan]||{};
+  for(const r of c.rows){
+    if(r.st[0]!==cur){ cur=r.st[0]; rows+=`<tr class="cat ${secs[cur][1]}"><td colspan="5"><span></span>${esc(secs[cur][0])}</td></tr>`; }
+    const adj=o[r.i]!=null;
+    rows+=`<tr><td>${esc(r.st[1])}</td><td class="rng">${numIn(r.st[2],1)}–${numIn(r.st[3],1)}</td><td><input class="plh${adj?" adj":""}" type="text" inputmode="decimal" data-plh="${r.i}" value="${numIn(r.h,1)}" aria-label="Horas ${esc(r.st[1])}"></td><td>${fmtCLP(r.v)}</td><td>${adj?`<button class="reset" type="button" data-plr="${r.i}" title="Volver al promedio">↺</button>`:""}</td></tr>`;
+  }
+  rows+=`<tr class="pltot"><td>Total</td><td>${numIn(c.hMin,1)}–${numIn(c.hMax,1)} h</td><td>${numIn(c.hTot,1)} h</td><td>${fmtCLP(c.base)}</td><td></td></tr>`;
+  document.getElementById("plTable").innerHTML=rows;
+  document.getElementById("plInc").innerHTML=P.inc.map(x=>`<li>${esc(x)}</li>`).join("");
+  document.getElementById("plSum").innerHTML=`
+    <div><span>Valor hora del equipo</span><b>${fmtCLP(c.rate)}</b></div>
+    <div><span>Horas a cobrar · ${numIn(c.hTot,1)} h</span><b>${fmtCLP(c.base)}</b></div>
+    <div><span class="lbl">Rango con horas mín. y máx.</span><span class="lbl">${fmtCLP(c.hMin*c.rate)} – ${fmtCLP(c.hMax*c.rate)}</span></div>
+    <div><span>Factor ${esc(PL_FACT[pl.fac][0].toLowerCase())} (×${numIn(c.fac,2)})</span><b>${fmtCLP(c.conFac)}</b></div>
+    <div><span>Recargo por urgencia (${pct(PL_URG[pl.urg][1])})</span><b>${fmtCLP(c.urg)}</b></div>
+    <div class="mid"><span>Total diseño y producción</span><b>${fmtCLP(c.serv)}</b></div>
+    <div><span>Montaje</span><b>${fmtCLP(c.mont)}</b></div>
+    <div class="big"><span>Total con montaje</span><b>${fmtCLP(c.total)}</b></div>`;
+}
+function plTouch(){ plSave(); renderPlanes(); }
+document.getElementById("v-planes").addEventListener("click",e=>{
+  const b=e.target.closest("[data-pl]"); if(b){ pl.plan=b.dataset.pl; plTouch(); return; }
+  const r=e.target.closest("[data-plr]"); if(r){ const o=pl.hrs[pl.plan]||{}; delete o[r.dataset.plr]; pl.hrs[pl.plan]=o; plTouch(); return; }
+  if(e.target.id==="plReset"){ delete pl.hrs[pl.plan]; plTouch(); document.getElementById("plStatus").textContent="Horas restablecidas al promedio de cada rango."; }
+});
+document.getElementById("v-planes").addEventListener("change",e=>{
+  const t=e.target, v=parseNum(t.value);
+  if(t.dataset.plh!=null){ const o=pl.hrs[pl.plan]||{}; o[t.dataset.plh]=Math.max(0,v); pl.hrs[pl.plan]=o; }
+  else if(t.id==="plVh") pl.vh=Math.max(0,v);
+  else if(t.id==="plPers") pl.pers=Math.max(0,v);
+  else if(t.id==="plFac") pl.fac=+t.value;
+  else if(t.id==="plUrg") pl.urg=+t.value;
+  else if(t.id==="plMont") pl.mont=t.value;
+  else if(t.id==="plMv"){ if(pl.mont==="a") pl.mA=Math.max(0,v); else pl.mB=Math.max(0,v); }
+  else return;
+  plTouch();
+});
+document.getElementById("plCopy").addEventListener("click", async ()=>{
+  const c=plCalc(), P=c.P;
+  const txt=[`${P.n} · ${P.sub}`, `Incluye: ${P.inc.join(", ")}.`, "", ...c.rows.map(r=>`${r.st[1]}: ${numIn(r.h,1)} h · ${fmtCLP(r.v)}`), "",
+    `Total horas: ${numIn(c.hTot,1)} h`, `Diseño y producción (${PL_FACT[pl.fac][0].toLowerCase()}${c.urg?", "+PL_URG[pl.urg][0].toLowerCase():""}): ${fmtCLP(c.serv)}`,
+    ...(c.mont?[`Montaje: ${fmtCLP(c.mont)}`]:[]), `Total: ${fmtCLP(c.total)}`].join("\n");
+  const st=document.getElementById("plStatus");
+  try{ await navigator.clipboard.writeText(txt); st.textContent="Resumen copiado."; }catch(_){ st.textContent="El navegador no dejó copiar."; }
+});
+
 // ---------- eventos: navegación ----------
-function route(){ const h=(location.hash||"#cotizar").slice(1); view=["cotizar","cotizaciones","mes","valores"].includes(h)?h:"cotizar"; renderView(); }
+function route(){ const h=(location.hash||"#cotizar").slice(1); view=["cotizar","planes","cotizaciones","mes","valores"].includes(h)?h:"cotizar"; renderView(); }
 window.addEventListener("hashchange", route);
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{ mode=b.dataset.mode; renderView(); }));
 document.getElementById("ufTop").addEventListener("change",e=>{ const v=parseNum(e.target.value); if(v>1000){ base.params.uf=v; baseChanged(); } renderView(); });
