@@ -293,6 +293,15 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
 .paper .foot{margin-top:20px;padding-top:10px;border-top:1px solid #e6e9eb;font-size:11px;color:#777;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .paper .ver{font-size:11px;color:#777;margin-top:4px}
 @media (max-width:560px){.paper{padding:22px 18px}.paper .pb{margin:-22px -18px 18px}.paper .cols{grid-template-columns:1fr}}
+.paper,.paper *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.paper tr,.paper .cols>div,.paper .ph,.paper tfoot{break-inside:avoid;page-break-inside:avoid}
+.paper h3{break-after:avoid}
+.paper.pdf{max-width:none;width:186mm;margin:0;padding:0;border-radius:0;box-shadow:none}
+.paper.pdf .pb{margin:0 0 18px;border-radius:3px}
+.paper.pdf .cols{grid-template-columns:1fr 1fr}
+.paper .plh td.r{white-space:nowrap}
+@page{size:A4;margin:14mm 12mm}
+@media print{.paper{max-width:none;padding:0;box-shadow:none;border-radius:0}.paper .pb{margin:0 0 18px}.paper .cols{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -379,7 +388,7 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
       </div>
       <div class="docscroll"><div id="paper"></div></div>
       <div class="inline">
-        <button class="btn primary" type="button" id="btnDl" hidden>Descargar cotización</button>
+        <button class="btn primary" type="button" id="btnDl" hidden>Descargar PDF</button>
         <button class="btn" type="button" id="btnCopy">Copiar resumen</button>
         <button class="btn" type="button" id="btnCsv" hidden>Desglose CSV</button>
         <button class="btn" type="button" id="btnDup">Duplicar</button>
@@ -397,6 +406,7 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
       <section class="card" aria-labelledby="hPl">
         <h2 id="hPl">Planes de diseño y producción</h2>
         <p class="sub">Elige un plan. Cada etapa trae su rango de horas; las horas a cobrar parten en el promedio y se pueden cambiar (quedan en fucsia; ↺ vuelve al promedio).</p>
+        <div class="projrow" style="margin-bottom:14px"><label class="field" for="plCli">Cliente<input id="plCli" type="text" placeholder="Empresa o persona"></label><label class="field" for="plProj">Proyecto<input id="plProj" type="text" placeholder="Nombre del proyecto"></label></div>
         <div class="plsel" id="plSel" role="group" aria-label="Plan"></div>
         <div class="plparams" id="plParams"></div>
         <div class="dwrap"><table class="dtable" id="plTable"></table></div>
@@ -405,7 +415,7 @@ nav.views a .n{font-size:11px;background:var(--fucsia);color:#fff;border-radius:
     <aside class="col" aria-label="Resumen del plan">
       <section class="card"><h2 style="font-size:18px">Incluye</h2><ul class="plinc" id="plInc"></ul></section>
       <section class="card"><h2 style="font-size:18px">Valor del plan</h2><div class="plsum" id="plSum"></div>
-        <div class="inline" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="plCopy">Copiar resumen</button><button class="btn ghost" type="button" id="plReset">Restablecer horas</button></div>
+        <div class="inline" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="plPdf">Descargar PDF</button><button class="btn" type="button" id="plCopy">Copiar resumen</button><button class="btn ghost" type="button" id="plReset">Restablecer horas</button></div>
         <div class="status" id="plStatus" aria-live="polite"></div></section>
     </aside>
   </div>
@@ -1219,7 +1229,7 @@ const PLANES={
 const PL_FACT=[["Pequeño y simple",1],["Mediano",1.25],["Grande",1.5],["Grande y complejo",2]];
 const PL_URG=[["Sin recargo (0%)",0],["Urgencia baja (10%)",0.1],["Urgencia media (20%)",0.2],["Urgencia alta (30%)",0.3]];
 const PL_MONT=[["sin","Sin montaje"],["a","Opción A: equipo de Popurrí"],["b","Opción B: dirección con equipo del cliente"]];
-let pl={plan:"b1", vh:20000, pers:2, fac:1, urg:0, mont:"sin", mA:0, mB:0, hrs:{}};
+let pl={cli:"", proj:"", plan:"b1", vh:20000, pers:2, fac:1, urg:0, mont:"sin", mA:0, mB:0, hrs:{}};
 try{ const lp=JSON.parse(localStorage.getItem("popurri-planes")||"null"); if(lp) pl=Object.assign(pl,lp); }catch(_){}
 if(!PLANES[pl.plan]) pl.plan="b1";
 function plSave(){ try{ localStorage.setItem("popurri-planes", JSON.stringify(pl)); }catch(_){} }
@@ -1235,6 +1245,8 @@ function plCalc(){
 }
 function renderPlanes(){
   const c=plCalc(), P=c.P;
+  const pc=document.getElementById("plCli"), pp=document.getElementById("plProj");
+  if(document.activeElement!==pc) pc.value=pl.cli||""; if(document.activeElement!==pp) pp.value=pl.proj||"";
   document.getElementById("plSel").innerHTML=Object.entries(PLANES).map(([id,x])=>`<button type="button" class="${x.cls}" data-pl="${id}" aria-pressed="${id===pl.plan}">${esc(x.n)}<small>${esc(x.sub)}</small></button>`).join("");
   const opt=(arr,sel)=>arr.map((x,i)=>`<option value="${i}"${i===sel?" selected":""}>${esc(x[0])}</option>`).join("");
   document.getElementById("plParams").innerHTML=`
@@ -1266,6 +1278,32 @@ function renderPlanes(){
     <div class="big"><span>Total con montaje</span><b>${fmtCLP(c.total)}</b></div>`;
 }
 function plTouch(){ plSave(); renderPlanes(); }
+function planPaperHTML(c){
+  const E=base.estudio, P=c.P, fecha=Date.now(), hasta=new Date(fecha+base.params.validez*864e5);
+  const logo = base.logo ? `<img src="${base.logo}" alt="${esc(E.nombre)}">` : `<div class="wm"><span style="color:#d4167e">po</span><span style="color:#1c9a55">pu</span><span style="color:#0aa9bb">rrí</span><small>ESTUDIO</small></div>`;
+  const secs={D:[`Diseño (Opción ${P.d})`,"#d4167e"],P:[`Producción (Opción ${P.p})`,"#1c9a55"],G:["Coordinación y correcciones","#0aa9bb"]};
+  let rows="", cur=null;
+  for(const r of c.rows){
+    if(r.st[0]!==cur){ cur=r.st[0]; rows+=`<tr class="sec"><td colspan="3"><i style="background:${secs[cur][1]}"></i>${esc(secs[cur][0])}</td></tr>`; }
+    rows+=`<tr class="plh"><td>${esc(r.st[1])}</td><td class="r">${numIn(r.h,1)} h</td><td class="r">${fmtCLP(r.v*c.fac)}</td></tr>`;
+  }
+  let tots=`<tr class="tot"><td>Subtotal diseño y producción</td><td class="r">${numIn(c.hTot,1)} h</td><td class="r">${fmtCLP(c.conFac)}</td></tr>`;
+  if(c.urg) tots+=`<tr><td colspan="2">Recargo por plazo urgente (${pct(PL_URG[pl.urg][1])})</td><td class="r">${fmtCLP(c.urg)}</td></tr>`;
+  if(c.mont) tots+=`<tr><td colspan="2">${esc(pl.mont==="a"?"Montaje a cargo del equipo de "+E.nombre:"Dirección de montaje con equipo del cliente")}</td><td class="r">${fmtCLP(c.mont)}</td></tr>`;
+  tots+=`<tr class="grand"><td colspan="2">Total</td><td class="r">${fmtCLP(c.total)}</td></tr>`;
+  const datos=[E.rut&&`RUT ${esc(E.rut)}`, E.correo&&esc(E.correo), E.telefono&&esc(E.telefono), E.instagram&&esc(E.instagram), E.ciudad&&esc(E.ciudad)].filter(Boolean).join(" · ");
+  return `<div class="paper"><div class="pb"></div>
+  <div class="ph"><div class="pl">${logo}<div class="studio">${esc(E.lema)}${datos?`<br>${datos}`:""}</div></div>
+  <div class="meta"><b>${esc(P.n)}</b>${fdate(fecha)}<br>Válida hasta el ${fdate(hasta)}</div></div>
+  <h1>${esc(pl.proj||P.n)}</h1>
+  <p class="for">${pl.cli?`Para ${esc(pl.cli)} · `:""}${esc(P.n)} · ${esc(P.sub)}</p>
+  <table><thead><tr><th>Etapa</th><th class="r">Horas</th><th class="r">Valor</th></tr></thead><tbody>${rows}</tbody><tfoot>${tots}</tfoot></table>
+  <div class="cols">
+   <div><h3>Incluye</h3><ul>${P.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>
+   <div><h3>Condiciones</h3><ul><li>Validez de ${base.params.validez} días.</li><li>El trabajo parte con el pago del anticipo.</li><li>Cambios de alcance después de aprobado el diseño se cotizan como adicional.</li><li>El diseño es propiedad intelectual de ${esc(E.nombre)} hasta el pago total.</li></ul></div>
+  </div>
+  <div class="foot"><span>${esc(E.nombre)}</span><span>Gracias por confiar en nosotras.</span></div></div>`;
+}
 document.getElementById("v-planes").addEventListener("click",e=>{
   const b=e.target.closest("[data-pl]"); if(b){ pl.plan=b.dataset.pl; plTouch(); return; }
   const r=e.target.closest("[data-plr]"); if(r){ const o=pl.hrs[pl.plan]||{}; delete o[r.dataset.plr]; pl.hrs[pl.plan]=o; plTouch(); return; }
@@ -1274,6 +1312,8 @@ document.getElementById("v-planes").addEventListener("click",e=>{
 document.getElementById("v-planes").addEventListener("change",e=>{
   const t=e.target, v=parseNum(t.value);
   if(t.dataset.plh!=null){ const o=pl.hrs[pl.plan]||{}; o[t.dataset.plh]=Math.max(0,v); pl.hrs[pl.plan]=o; }
+  else if(t.id==="plCli"){ pl.cli=t.value; plSave(); return; }
+  else if(t.id==="plProj"){ pl.proj=t.value; plSave(); return; }
   else if(t.id==="plVh") pl.vh=Math.max(0,v);
   else if(t.id==="plPers") pl.pers=Math.max(0,v);
   else if(t.id==="plFac") pl.fac=+t.value;
@@ -1282,6 +1322,11 @@ document.getElementById("v-planes").addEventListener("change",e=>{
   else if(t.id==="plMv"){ if(pl.mont==="a") pl.mA=Math.max(0,v); else pl.mB=Math.max(0,v); }
   else return;
   plTouch();
+});
+document.getElementById("plPdf").addEventListener("click", ()=>{
+  const c=plCalc(), st=document.getElementById("plStatus");
+  const nm=(norm(c.P.n+"-"+(pl.cli||pl.proj||"popurri")).replace(/[^a-z0-9]+/g,"-")).replace(/-+$/,"");
+  downloadPaper(planPaperHTML(c), nm, `${c.P.n} · ${base.estudio.nombre}`, t=>{ st.textContent=t; });
 });
 document.getElementById("plCopy").addEventListener("click", async ()=>{
   const c=plCalc(), P=c.P;
@@ -1409,10 +1454,39 @@ document.getElementById("btnCopy").addEventListener("click", async ()=>{
   try{ await navigator.clipboard.writeText(txt); setStatus("Resumen copiado: pégalo en el correo o WhatsApp."); }catch(_){ setStatus("El navegador no dejó copiar."); }
 });
 function fileName(ext){ return (quoteNum(q)+"-"+norm(q.cliente||q.nombre||"popurri").replace(/[^a-z0-9]+/g,"-")).replace(/-+$/,"")+"."+ext; }
-document.getElementById("btnDl").addEventListener("click", async ()=>{
+// ---------- PDF ----------
+const H2P_SRC="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+let h2pLoading=null;
+function loadPdfLib(){
+  if(window.html2pdf) return Promise.resolve(window.html2pdf);
+  if(!h2pLoading) h2pLoading=new Promise((ok,ko)=>{ const sc=document.createElement("script"); sc.src=H2P_SRC; sc.onload=()=>window.html2pdf?ok(window.html2pdf):ko(new Error("pdf")); sc.onerror=()=>{ h2pLoading=null; ko(new Error("pdf")); }; document.head.appendChild(sc); });
+  return h2pLoading;
+}
+function paperDocHTML(inner,title){
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet"><style>body{background:#eef1f2;margin:0;padding:24px}${document.getElementById("paperCss").textContent}@media print{body{background:#fff;padding:0}}</style></head><body>${inner}</body></html>`;
+}
+async function downloadPaper(inner,base,title,setMsg){
+  setMsg("Generando PDF…");
+  try{
+    const h2p=await loadPdfLib();
+    try{ await document.fonts.ready; }catch(_){}
+    const box=document.createElement("div");
+    box.innerHTML=inner; const el=box.firstElementChild; el.classList.add("pdf");
+    try{
+      const blob=await h2p().set({margin:[12,12,14,12],filename:base+".pdf",image:{type:"jpeg",quality:0.96},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0},
+        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+        pagebreak:{mode:["css","legacy"],avoid:["tr",".cols",".ph","h1"]}}).from(el).outputPdf("blob");
+      await saveFile(base+".pdf", blob); setMsg("PDF descargado ✓");
+    } finally { box.remove(); }
+  }catch(_){
+    try{ await saveFile(base+".html", new Blob([paperDocHTML(inner,title)],{type:"text/html"})); setMsg("No se pudo armar el PDF: se descargó la página; ábrela y usa Imprimir → Guardar como PDF."); }
+    catch(__){ setMsg("No se descargó."); }
+  }
+}
+document.getElementById("btnDl").addEventListener("click", ()=>{
   const s=calc(q);
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Cotización ${esc(quoteNum(q))} · ${esc(base.estudio.nombre)}</title><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet"><style>body{background:#eef1f2;margin:0;padding:24px}${document.getElementById("paperCss").textContent}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}}</style></head><body>${paperHTML(q,s)}</body></html>`;
-  try{ await saveFile(fileName("html"), new Blob([html],{type:"text/html"})); setStatus("Descargada. Ábrela y usa Imprimir → Guardar como PDF."); }catch(_){ setStatus("No se descargó."); }
+  downloadPaper(paperHTML(q,s), fileName("pdf").replace(/\.pdf$/,""), `Cotización ${quoteNum(q)} · ${base.estudio.nombre}`, setStatus);
 });
 document.getElementById("btnCsv").addEventListener("click", async ()=>{
   const s=calc(q), L=[["Categoría","Partida","Cantidad","Unidad","Valor unitario","Unidad valor","Subtotal CLP","Subtotal UF"]];
